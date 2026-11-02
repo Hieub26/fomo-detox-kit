@@ -21,6 +21,8 @@ Tạo mã giáo viên (mã chỉ hiện một lần, chạy lại sẽ đổi m�
 docker exec supabase_db_fomo_detox_kit psql -U postgres -At -c "select private.rotate_teacher_code()"
 ```
 
+Sau khi đổi migration, chạy `npm run db:types` để sinh lại `src/types/database.ts`. Không sửa tay file này.
+
 ## Cấu trúc
 
 ```
