@@ -1,5 +1,5 @@
-module.exports = {
-  content: ['index.html', 'app.js', 'teacher.js', 'auth.js'],
+export default {
+  content: ['index.html', 'src/**/*.ts'],
   theme: {
     extend: {
       colors: {

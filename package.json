@@ -1,16 +1,20 @@
 {
   "name": "fomo-detox-kit",
   "private": true,
+  "type": "module",
   "scripts": {
-    "build:css": "tailwindcss -i src/tailwind.css -o app.css --minify",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 8000 --strictPort",
     "db:start": "supabase start -x studio,imgproxy,storage-api,edge-runtime,realtime,logflare,vector,mailpit,postgres-meta,supavisor",
     "db:stop": "supabase stop",
-    "db:reset": "supabase db reset",
-    "serve": "python3 -m http.server 8000 --bind 127.0.0.1"
+    "db:reset": "supabase db reset"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.118.0",
     "supabase": "^2.122.0",
-    "tailwindcss": "^3.4.19"
+    "tailwindcss": "^3.4.19",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
   }
 }
