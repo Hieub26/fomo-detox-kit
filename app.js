@@ -194,8 +194,8 @@ function compareHtml(pre, post) {
 
 /* ======================= ĐIỀU HƯỚNG ======================= */
 const TABS = [
-  [1, 'fa-book-open', '1. Cẩm Nang Số'], [2, 'fa-clipboard-question', '2. Trắc Nghiệm FOMO'], [3, 'fa-calendar-check', '3. Lộ Trình Detox'],
-  [4, 'fa-headphones', '4. Âm Thanh Sóng Não'], [5, 'fa-chart-line', '5. Góc Chia Sẻ & Badge']
+  [1, 'fa-book-open', '1. Cẩm Nang Số', 'Cẩm nang'], [2, 'fa-clipboard-question', '2. Trắc Nghiệm FOMO', 'Trắc nghiệm'], [3, 'fa-calendar-check', '3. Lộ Trình Detox', 'Lộ trình'],
+  [4, 'fa-headphones', '4. Âm Thanh Sóng Não', 'Âm thanh'], [5, 'fa-chart-line', '5. Góc Chia Sẻ & Badge', 'Chia sẻ']
 ];
 let tab = 1, postFor = null, planPick = null;
 function switchTab(n) {
@@ -205,6 +205,7 @@ function show(n) {
   tab = n;
   for (let i = 1; i <= 6; i++) $('#module-' + i).classList.toggle('hidden', i !== n);
   $('#navTabs').innerHTML = TABS.map(t => `<button onclick="switchTab(${t[0]})" class="flex items-center gap-2 px-3.5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${t[0] === n ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}"><i class="fa-solid ${t[1]} text-base"></i> <span>${t[2]}</span></button>`).join('');
+  $('#bottomNav').innerHTML = TABS.map(t => `<button onclick="switchTab(${t[0]})" aria-current="${t[0] === n}" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium ${t[0] === n ? 'text-teal-700' : 'text-slate-500'}"><i class="fa-solid ${t[1]} text-lg ${t[0] === n ? 'bg-teal-100 rounded-full px-3 py-1' : 'py-1'}"></i><span>${t[3]}</span></button>`).join('');
   RENDER[n]();
   window.scrollTo(0, 0);
 }

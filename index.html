@@ -2,7 +2,7 @@
 <html lang="vi" class="h-full bg-slate-50">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#0f766e">
     <title>FOMO DETOX KIT - THCS Nguyễn Tất Thành</title>
     <link rel="manifest" href="manifest.webmanifest">
@@ -33,13 +33,26 @@
         .paused .pulse-animation { animation: none; }
         @keyframes fade-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
         .animate-fade-in { animation: fade-in .4s ease; }
+        /* Điện thoại: chữ nhập liệu >=16px để iOS không tự phóng to */
+        @media (max-width: 767px) { input:not([type=range]):not([type=radio]):not([type=checkbox]), select, textarea { font-size: 16px; } }
+        /* Thiết bị cảm ứng: vùng chạm lớn hơn */
+        @media (pointer: coarse) {
+            button, select, label.cursor-pointer { min-height: 44px; }
+            input[type=checkbox], input[type=radio] { width: 1.25rem; height: 1.25rem; }
+            input[type=range] { height: 28px; }
+        }
+        /* Chuột: tab trên cùng có hiệu ứng hover; cảm ứng: bỏ hover dính */
+        @media (hover: none) { .hover\:shadow-md:hover { box-shadow: none; } }
+        @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+        @media print { header, nav, #bottomNav, #toast, footer { display: none !important; } }
     </style>
 </head>
 <body class="font-sans antialiased text-slate-800 h-full flex flex-col bg-slate-50 selection:bg-brand-500 selection:text-white">
 
+    <div class="sticky top-0 z-50">
     <!-- TOP BAR / HEADER -->
-    <header class="bg-gradient-to-r from-teal-700 via-teal-600 to-indigo-700 text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-2">
+    <header class="bg-gradient-to-r from-teal-700 via-teal-600 to-indigo-700 text-white shadow-lg pt-[env(safe-area-inset-top)]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex justify-between items-center gap-2">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md shadow-inner">
                     <i class="fa-solid fa-brain text-xl text-teal-200"></i>
@@ -49,11 +62,12 @@
                         FOMO DETOX KIT
                         <span class="bg-teal-400/30 text-teal-100 text-xs px-2 py-0.5 rounded-full border border-teal-300/30 font-normal">v3.0 Digital</span>
                     </h1>
-                    <p class="text-xs text-teal-100/90 font-light hidden sm:block">Giải pháp số can thiệp hội chứng sợ bỏ lỡ &amp; Cải thiện chất lượng giấc ngủ</p>
+                    <p class="text-xs text-teal-100/90 font-light hidden lg:block">Giải pháp số can thiệp hội chứng sợ bỏ lỡ &amp; Cải thiện chất lượng giấc ngủ</p>
+                    <p class="text-[11px] text-teal-100/90 font-light sm:hidden leading-tight">THCS Nguyễn Tất Thành • Ngô Gia Linh 8A2</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <div class="text-right text-xs bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-sm hidden sm:block">
+                <div class="text-right text-xs bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-sm hidden md:block">
                     <p class="font-semibold text-teal-100"><i class="fa-solid fa-school text-teal-300 mr-1"></i> Trường THCS Nguyễn Tất Thành</p>
                     <p class="text-teal-200/80">Tác giả: <strong class="text-white">Ngô Gia Linh</strong> (Lớp 8A2) • Thái Nguyên</p>
                 </div>
@@ -65,14 +79,15 @@
     </header>
 
     <!-- NAVIGATION TABS -->
-    <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-[61px] z-40">
+    <nav class="hidden md:block bg-white border-b border-slate-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
             <div class="flex space-x-1 sm:space-x-4 overflow-x-auto py-2 custom-scrollbar" id="navTabs"></div>
         </div>
     </nav>
+    </div>
 
     <!-- MAIN CONTENT AREA -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 md:pb-6">
         <section id="module-1" class="space-y-6"></section>
         <section id="module-2" class="hidden space-y-6"></section>
         <section id="module-3" class="hidden space-y-6"></section>
@@ -81,12 +96,15 @@
         <section id="module-6" class="hidden space-y-6"></section>
     </main>
 
-    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
+    <footer class="bg-white border-t border-slate-200 py-4 pb-20 md:pb-4 text-center text-xs text-slate-500 mt-auto">
         <p>© 2026 Dự án Nghiên cứu Khoa Học Kỹ Thuật • Trường THCS Nguyễn Tất Thành, Thái Nguyên</p>
         <p class="text-slate-400 mt-0.5">Dự án "FOMO Detox Kit" - Lĩnh vực Khoa học Xã hội &amp; Hành vi / Hệ thống phần mềm</p>
     </footer>
 
-    <div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-6 z-[60] bg-slate-900 text-white text-sm px-4 py-2.5 rounded-xl shadow-xl max-w-[90%]"></div>
+    <!-- Thanh điều hướng dưới cùng cho điện thoại -->
+    <nav id="bottomNav" class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,.06)] pb-[env(safe-area-inset-bottom)] flex" aria-label="Điều hướng chính"></nav>
+
+    <div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-24 md:bottom-6 z-[60] bg-slate-900 text-white text-sm px-4 py-2.5 rounded-xl shadow-xl max-w-[90%]"></div>
 
     <script src="app.js"></script>
 </body>
