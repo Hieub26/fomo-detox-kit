@@ -3,8 +3,8 @@ import { registerActions } from '../../lib/actions';
 
 export const CARDS = [
   ['amber', 'fa-ghost', 'FOMO Là Gì?', '<strong>Fear Of Missing Out (FOMO)</strong> - Nỗi sợ bị bỏ lỡ thông tin, xu hướng hoặc các sự kiện thú vị mà bạn bè đang trải nghiệm. Nó khiến học sinh luôn thôi thúc phải kiểm tra điện thoại từng phút.', 'fa-circle-info', 'Thuật toán MXH liên tục tạo cảm giác gấp gáp để giữ chân bạn lâu nhất có thể!'],
-  ['indigo', 'fa-moon', 'Sát Thủ Giấc Ngủ: Ánh Sáng Xanh', 'Ánh sáng xanh từ màn hình làm gián đoạn nghiêm trọng quá trình sản sinh hormone <strong>Melatonin</strong> - hormone gây buồn ngủ tự nhiên.', 'fa-triangle-exclamation', 'Trì hoãn giấc ngủ kỹ thuật số khiến bạn ngủ muộn, hay giật mình và mệt mỏi vào sáng hôm sau.'],
-  ['rose', 'fa-graduation-cap', 'Hệ Lụy Đến Kết Quả Học Tập', 'Thiếu ngủ làm giảm 40% khả năng ghi nhớ ngắn hạn, mất độ tập trung trong giờ học, tiếp thu bài chậm và dễ dẫn đến sa sút điểm số các môn.', 'fa-arrow-trend-down', 'Giấc ngủ ngon là chìa khóa vàng giúp não bộ ghi nhớ kiến thức bền vững.']
+  ['indigo', 'fa-moon', 'Sát Thủ Giấc Ngủ: Ánh Sáng Xanh', 'Dùng màn hình sát giờ ngủ, nhất là nội dung kích thích như video ngắn, có thể làm chậm tiết hormone <strong>Melatonin</strong> - hormone gây buồn ngủ tự nhiên - và khiến não khó "tắt" để ngủ.', 'fa-triangle-exclamation', 'Trì hoãn giấc ngủ kỹ thuật số khiến bạn ngủ muộn, hay giật mình và mệt mỏi vào sáng hôm sau.'],
+  ['rose', 'fa-graduation-cap', 'Hệ Lụy Đến Kết Quả Học Tập', 'Nhiều nghiên cứu cho thấy thiếu ngủ làm giảm khả năng ghi nhớ và tập trung trong giờ học, khiến tiếp thu bài chậm hơn và có thể ảnh hưởng đến kết quả học tập.', 'fa-arrow-trend-down', 'Giấc ngủ ngon là chìa khóa vàng giúp não bộ ghi nhớ kiến thức bền vững.']
 ];
 // Tailwind cần tên lớp đầy đủ, nên liệt kê từng bộ màu.
 export const CARD_CLS: Record<string, string[]> = {

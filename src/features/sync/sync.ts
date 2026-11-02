@@ -3,10 +3,9 @@ import { appReady, refresh, tab } from '../shell/navigation';
 import { $ } from '../../lib/dom';
 import { sb } from '../../lib/supabase';
 import { S, blank, setS } from '../../state/store';
-import type { AppState, Assessment, AudioSession, Post, Program } from '../../types';
+import type { AppState, Assessment, AudioSession, Post, Program, UserRole } from '../../types';
 import type { Database } from '../../types/database';
 
-export const LEGACY_KEY = 'fomo_detox_kit_v2'; // dữ liệu của bản cũ, khi app chưa có tài khoản
 export const cacheKey = (uid: string) => 'fomo_cache_' + uid;
 
 type Tables = Database['public']['Tables'];
@@ -154,11 +153,12 @@ export const Sync = {
     let changed = false, ok = true;
     try {
       const [{ data: me, error }, merges] = await Promise.all([
-        sb.from('profiles').select('username,full_name,class_name,role').eq('id', uid).single(),
+        sb.from('profiles').select('username,full_name,class_name,role,approved').eq('id', uid).single(),
         Promise.all(GROUPS_KEYS.map(key => this.fetchGroup(key, uid)))
       ]);
       if (error) throw error;
-      const prof = { code: me.username, name: me.full_name, cls: me.class_name || '', role: me.role };
+      // CHECK trong database đảm bảo role là một trong các giá trị của UserRole.
+      const prof = { code: me.username, name: me.full_name, cls: me.class_name || '', role: me.role as UserRole, approved: me.approved };
       if (JSON.stringify(prof) !== JSON.stringify(S.profile)) { changed = true; S.profile = prof; }
       for (const merge of merges) changed = merge() || changed;
       this.persist();
@@ -193,7 +193,7 @@ export function setSyncBadge(state: 'ok' | 'pending' | 'off' | 'error') {
     ok: ['fa-cloud', 'text-teal-100', 'Đã đồng bộ với tài khoản'],
     pending: ['fa-arrows-rotate', 'text-amber-200', 'Đang đồng bộ...'],
     off: ['fa-cloud-arrow-up', 'text-amber-200', 'Mất mạng: dữ liệu lưu tạm trên máy và sẽ tự gửi khi có mạng'],
-    error: ['fa-triangle-exclamation', 'text-rose-200', 'Máy chủ từ chối dữ liệu. Hãy tải bản sao lưu và báo thầy cô.']
+    error: ['fa-triangle-exclamation', 'text-rose-200', 'Máy chủ từ chối dữ liệu. Hãy báo thầy cô.']
   }[state];
   el.className = `fa-solid ${M[0]} ${M[1]}`;
   el.parentElement!.title = M[2];
@@ -203,7 +203,7 @@ export function setSyncBadge(state: 'ok' | 'pending' | 'off' | 'error') {
 // Lấy lại dữ liệu mới khi quay lại app, không làm mất nội dung đang nhập.
 export function refreshIfSafe() {
   const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
-  if (appReady && !typing && !$('#fomoForm') && tab !== 7) refresh();
+  if (appReady && !typing && !$('#fomoForm') && tab < 7) refresh(); // tab Lớp và Quản trị tự tải dữ liệu riêng
 }
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') Sync.pull().then(c => { if (c) refreshIfSafe(); });

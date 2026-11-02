@@ -1,9 +1,9 @@
 import { Sync } from '../features/sync/sync';
 import type { AppState } from '../types/index';
 
-export function blank() {
+export function blank(): AppState {
   return {
-    profile: { code: '', name: '', cls: '', role: 'student' },
+    profile: { code: '', name: '', cls: '', role: 'student', approved: false },
     assessments: [], programs: [], posts: [], audio: [], reminder: false
   };
 }

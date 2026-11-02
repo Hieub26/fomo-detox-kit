@@ -21,7 +21,7 @@ export const PLANS: Record<number, { sub: string; who: string; badge: string; ta
   },
   // Ngày 14–21 của lộ trình 21 ngày do nhóm phát triển soạn thêm; chỉnh tại đây.
   21: {
-    sub: 'Toàn diện', who: 'Dành cho mức độ FOMO cao / rối loạn ngủ', badge: 'Bậc Thầy Detox',
+    sub: 'Toàn diện', who: 'Dành cho mức độ FOMO cao, ngủ kém', badge: 'Bậc Thầy Detox',
     tasks: BASE_TASKS.concat([
       'Nhìn lại nửa chặng: mở Module 5, xem điểm của bạn thay đổi thế nào và ghi lại 1 điều bạn tự hào.',
       'Đặt giờ ngừng màn hình: ngừng mọi thiết bị có màn hình trước giờ đi ngủ 60 phút.',

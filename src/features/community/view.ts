@@ -11,18 +11,29 @@ export const SAMPLE_POSTS = [
   { who: 'Học sinh Khối 8 • Ẩn danh', col: 'text-indigo-600', when: 'Bài mẫu', text: '"Mấy hôm nay tắt thông báo sau 21h30 và nghe tiếng mưa rơi ở Module 4 thấy ngủ ngon hẳn. Sáng ra đi học không còn bị đau đầu ngủ gật nữa!"' },
   { who: 'Học sinh Khối 9 • Ẩn danh', col: 'text-teal-600', when: 'Bài mẫu', text: '"Từng bị FOMO nặng vì sợ bỏ lỡ drama trong nhóm chat lớp. Nhưng thử làm theo lộ trình Detox 7 ngày mới thấy không có điện thoại buổi đêm cuộc sống bình yên hơn hẳn."' }
 ];
-export const FORBIDDEN = ['chửi', 'xúc phạm', 'bậy'];
+// Từ tục, chửi bới và viết tắt phổ biến. So khớp theo cả từ (không phải một phần của từ khác),
+// nên các câu kể lại như "em bị bạn chửi" vẫn gửi được. Thêm từ vào hai danh sách dưới đây khi cần.
+export const BAD_WORDS = [
+  'địt', 'đụ', 'đéo', 'đếch', 'lồn', 'buồi', 'cặc', 'đĩ', 'điếm', 'chó chết', 'óc chó', 'thằng chó', 'con chó', 'mẹ mày',
+  'bố mày', 'con mẹ mày', 'khốn nạn', 'đồ khốn', 'súc vật', 'bố láo', 'mất dạy', 'mất nết', 'đồ ngu', 'ngu như bò',
+  'ngu như chó', 'thằng ngu', 'con ngu', 'đồ điên', 'cút đi', 'chết đi', 'đi chết đi'
+];
+export const BAD_ABBR = ['dm', 'đm', 'dmm', 'đmm', 'dcm', 'đcm', 'dkm', 'đkm', 'vcl', 'vkl', 'vl', 'vc', 'vcc', 'cc', 'cl', 'clm', 'clgt', 'cmm', 'cmnr', 'loz', 'dit', 'đjt', 'djt', 'fuck', 'shit', 'bitch', 'wtf', 'đờ mờ'];
+const words = (t: string) => ' ' + t.toLowerCase().normalize('NFC').replace(/[^\p{L}\p{N}]+/gu, ' ').trim() + ' ';
+export const hasBadWords = (text: string) => { const w = words(text); return [...BAD_WORDS, ...BAD_ABBR].some(b => w.includes(' ' + b + ' ')); };
 
 export function badges(): [string, string, string, boolean, string][] {
   const list = sortedAssess();
   const control = S.programs.some(p => { const a = assessById(p.preId), b = p.postId && assessById(p.postId); return a && b && b.score <= a.score - 3; })
     || (list.length > 1 && levelIdx(list[list.length - 1].score) === 0 && levelIdx(list[0].score) > 0);
-  return [
+  const admin = S.profile.role === 'admin'; // quản trị viên thấy mọi huy hiệu đã mở để xem trước giao diện
+  const list4: [string, string, string, boolean, string][] = [
     ['Chiến Binh Giấc Ngủ', 'fa-award', 'teal', completed(7), 'Hoàn thành lộ trình 7 ngày'],
     ['Bậc Thầy Kiểm Soát', 'fa-shield-halved', 'indigo', control, 'Giảm từ 3 điểm trở lên sau lộ trình'],
     ['Sứ Giả Detox (14 Ngày)', 'fa-medal', 'amber', completed(14), 'Hoàn thành lộ trình 14 ngày'],
     ['Bậc Thầy Detox (21 Ngày)', 'fa-crown', 'rose', completed(21), 'Hoàn thành lộ trình 21 ngày']
   ];
+  return admin ? list4.map(b => [b[0], b[1], b[2], true, b[4]]) : list4;
 }
 export const BCLS: Record<string, string> = {
   teal: 'bg-teal-50 border-teal-200 text-teal-800|text-teal-600', indigo: 'bg-indigo-50 border-indigo-200 text-indigo-800|text-indigo-600',
@@ -62,7 +73,7 @@ export function render5() {
   ${progressCard()}
   <div class="${card}">
     <h3 class="font-bold text-xl text-slate-800 mb-1">Góc Chia Sẻ Ẩn Danh (Confession)</h3>
-    <p class="text-xs text-slate-500 mb-6">Nơi học sinh THCS Nguyễn Tất Thành trải lòng về áp lực FOMO &amp; lan tỏa động lực Detox. Chỉ bạn đọc được bài của mình: bài lưu trong tài khoản của bạn, giáo viên không xem được trong app và bài không nằm trong file nộp.</p>
+    <p class="text-xs text-slate-500 mb-6">Nơi học sinh THCS Nguyễn Tất Thành trải lòng về áp lực FOMO &amp; lan tỏa động lực Detox. Chỉ bạn đọc được bài của mình: bài lưu trong tài khoản của bạn, giáo viên và quản trị viên không xem được trong app và bài không nằm trong file nộp.</p>
     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
       <textarea id="confessionInput" rows="3" maxlength="1500" class="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Viết chia sẻ hoặc trải nghiệm của bạn tại đây... (Hệ thống tự động ẩn danh)"></textarea>
       <div class="flex justify-between items-center mt-3"><span class="text-xs text-slate-400"><i class="fa-solid fa-user-secret mr-1"></i> Không hiển thị tên của bạn</span>
@@ -80,7 +91,7 @@ export function render5() {
 export function postConfession() {
   const input = $('#confessionInput'), text = input.value.trim();
   if (!text) { toast('Vui lòng nhập nội dung trước khi gửi!'); return; }
-  if (FORBIDDEN.some(w => text.toLowerCase().includes(w))) { toast('Nội dung chứa từ ngữ không phù hợp. Vui lòng giữ môi trường văn minh!'); return; }
+  if (hasBadWords(text)) { toast('Nội dung chứa từ ngữ không phù hợp. Vui lòng giữ môi trường văn minh!'); return; }
   S.posts.push({ id: uid(), date: today(), text }); save(); refresh(); toast('Chia sẻ của bạn đã được lưu.');
 }
 export function delPost(id: string) {

@@ -67,14 +67,14 @@ export type Database = {
                   ]
                 },"profiles": {
                   Row: {
-                    "class_name": string | null,"created_at": string,"full_name": string,"id": string,"role": string,"username": string
+                    "approved": boolean,"class_name": string | null,"created_at": string,"full_name": string,"id": string,"role": string,"username": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "class_name"?: string | null,"created_at"?: string,"full_name"?: string,"id": string,"role"?: string,"username": string
+                    "approved"?: boolean,"class_name"?: string | null,"created_at"?: string,"full_name"?: string,"id": string,"role"?: string,"username": string
                   }
                   Update: {
-                    "class_name"?: string | null,"created_at"?: string,"full_name"?: string,"id"?: string,"role"?: string,"username"?: string
+                    "approved"?: boolean,"class_name"?: string | null,"created_at"?: string,"full_name"?: string,"id"?: string,"role"?: string,"username"?: string
                   }
                   Relationships: [
                     
@@ -113,14 +113,38 @@ export type Database = {
             [_ in never]: never
           }
           Functions: {
-            "can_view_student":
+            "admin_delete_user":
+{ Args: { "target": string }; Returns: undefined
+                           },
+"admin_reset_password":
+{ Args: { "new_password": string,"target": string }; Returns: undefined
+                           },
+"admin_rotate_admin_code":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"admin_rotate_teacher_code":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"admin_set_role":
+{ Args: { "new_role": string,"target": string }; Returns: undefined
+                           },
+"can_view_student":
 { Args: { "target": string }; Returns: boolean
+                           },
+"claim_admin":
+{ Args: { "code": string }; Returns: boolean
                            },
 "claim_teacher":
 { Args: { "code": string }; Returns: boolean
                            },
+"is_admin":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "is_teacher":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"set_student_approval":
+{ Args: { "ok": boolean,"target": string }; Returns: undefined
                            },
 "teacher_reset_password":
 { Args: { "new_password": string,"target": string }; Returns: undefined

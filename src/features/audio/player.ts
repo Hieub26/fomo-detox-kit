@@ -3,11 +3,11 @@ import { registerActions } from '../../lib/actions';
 import { S, save } from '../../state/store';
 
 export const SOUNDS: Record<string, { name: string; desc: string; icon: string }> = {
-  alpha: { name: 'Sóng Alpha (10Hz)', desc: 'Tần số giúp não bộ thư giãn sâu sau các giờ học căng thẳng', icon: 'fa-brain' },
-  theta: { name: 'Sóng Theta (6Hz)', desc: 'Tần số hỗ trợ chợp mắt và đi vào giấc ngủ sâu', icon: 'fa-bed' },
+  alpha: { name: 'Sóng Alpha (10Hz)', desc: 'Nhịp phách 10Hz, có thể giúp thư giãn sau giờ học', icon: 'fa-brain' },
+  theta: { name: 'Sóng Theta (6Hz)', desc: 'Nhịp phách 6Hz, có thể giúp dễ chợp mắt hơn', icon: 'fa-bed' },
   rain: { name: 'Tiếng Mưa Rơi (White Noise)', desc: 'Tạo môi trường âm thanh nền che lấp các tiếng ồn gây xao nhãng', icon: 'fa-cloud-showers-heavy' },
   ocean: { name: 'Sóng Biển Dịu Êm (Pink Noise)', desc: 'Tần số nhịp nhàng dịu êm, nhấp nhô như sóng vỗ', icon: 'fa-water' },
-  lofi: { name: 'Giai Điệu Thiền Nhẹ Nhàng', desc: 'Nhịp điệu chậm rãi xoa dịu nhịp tim', icon: 'fa-music' }
+  lofi: { name: 'Giai Điệu Thiền Nhẹ Nhàng', desc: 'Nhịp điệu chậm rãi, nhẹ nhàng', icon: 'fa-music' }
 };
 
 export const AU = { ctx: null as AudioContext | null, master: null as GainNode | null, nodes: [] as AudioScheduledSourceNode[], key: null as string | null, playing: false, vol: 0.5, timerMin: 0, timer: undefined as number | undefined, endAt: 0, startedAt: 0 };
@@ -116,9 +116,9 @@ export function render4() {
   };
   $('#module-4').innerHTML = `<div class="${card} sm:p-8">
     <div class="max-w-3xl mx-auto text-center">
-      <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-3 py-1 rounded-full uppercase">Liệu Pháp Âm Thanh Khoa Học</span>
-      <h2 class="text-2xl font-bold text-slate-800 mt-2">Trình Phát Âm Thanh Làm Dịu Sóng Não</h2>
-      <p class="text-slate-500 text-sm mt-1">Chuyển đổi trạng thái sóng não từ Beta (căng thẳng) về Alpha/Theta (thư giãn sâu, chuẩn bị giấc ngủ) bằng tần số âm thanh tổng hợp. Đeo tai nghe hai bên để nghe rõ sóng Alpha/Theta.</p>
+      <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-3 py-1 rounded-full uppercase">Âm Thanh Thư Giãn</span>
+      <h2 class="text-2xl font-bold text-slate-800 mt-2">Trình Phát Âm Thanh Thư Giãn</h2>
+      <p class="text-slate-500 text-sm mt-1">Âm thanh nhịp phách (binaural beats) Alpha/Theta và tiếng ồn nền có thể giúp một số bạn thư giãn, dễ ngủ hơn. Bằng chứng khoa học về nhịp phách còn hạn chế và hiệu quả khác nhau ở mỗi người. Đeo tai nghe hai bên để nghe nhịp phách.</p>
     </div>
     <div id="playerWrap" class="max-w-2xl mx-auto mt-8 bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden"><div class="flex flex-col items-center text-center">
       <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-teal-500 to-indigo-500 flex items-center justify-center pulse-animation mb-4 shadow-lg shadow-teal-500/20"><i id="currentAudioIcon" class="fa-solid fa-water text-3xl text-white"></i></div>
