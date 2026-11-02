@@ -193,7 +193,7 @@ export function setSyncBadge(state: 'ok' | 'pending' | 'off' | 'error') {
     ok: ['fa-cloud', 'text-teal-100', 'Đã đồng bộ với tài khoản'],
     pending: ['fa-arrows-rotate', 'text-amber-200', 'Đang đồng bộ...'],
     off: ['fa-cloud-arrow-up', 'text-amber-200', 'Mất mạng: dữ liệu lưu tạm trên máy và sẽ tự gửi khi có mạng'],
-    error: ['fa-triangle-exclamation', 'text-rose-200', 'Máy chủ từ chối dữ liệu. Hãy tải bản sao lưu và báo thầy cô.']
+    error: ['fa-triangle-exclamation', 'text-rose-200', 'Máy chủ từ chối dữ liệu. Hãy báo thầy cô.']
   }[state];
   el.className = `fa-solid ${M[0]} ${M[1]}`;
   el.parentElement!.title = M[2];

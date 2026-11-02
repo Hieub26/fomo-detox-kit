@@ -4,9 +4,8 @@ import { authError } from '../auth/view';
 import { LEVELS } from '../quiz/content';
 import { levelIdx, sortedAssess } from '../quiz/scoring';
 import { show } from '../shell/navigation';
-import { sanitizeData } from '../sync/sanitize';
 import { Sync } from '../sync/sync';
-import { $, bt, card, download, esc, inp, toCsv, toast, today } from '../../lib/dom';
+import { $, bt, card, download, esc, inp, toCsv, toast } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
 import { sb } from '../../lib/supabase';
 import { S, blank, save, setS } from '../../state/store';
@@ -44,14 +43,10 @@ export function render6() {
       <p class="text-xs text-slate-500 my-2">Chỉ dành cho giáo viên được nhà trường giao quản trị hệ thống.</p>
       <div class="flex gap-2"><input id="padmin" autocomplete="off" spellcheck="false" aria-label="Mã quản trị" placeholder="Mã quản trị" class="${inp}"><button data-click="claimAdmin" class="${bt} bg-slate-700 hover:bg-slate-800 whitespace-nowrap">Xác nhận</button></div></details>`}
     </div>
-    <div class="${card}"><h3 class="font-bold text-lg mb-1"><i class="fa-solid fa-file-export text-indigo-600 mr-1"></i> Xuất kết quả</h3>
-      <p class="text-xs text-slate-500 mb-3">File gồm điểm trắc nghiệm và tiến độ lộ trình của riêng tài khoản này. Không gồm Góc Ẩn Danh.</p>
+    <div class="${card}"><h3 class="font-bold text-lg mb-1"><i class="fa-solid fa-database text-indigo-600 mr-1"></i> Dữ liệu của bạn</h3>
+      <p class="text-xs text-slate-500 mb-3">Dữ liệu lưu trong tài khoản và theo bạn sang thiết bị khác. File CSV gồm điểm trắc nghiệm và tiến độ lộ trình của riêng tài khoản này, không gồm Góc Ẩn Danh.</p>
       ${admin ? `<p class="text-xs rounded-lg px-3 py-2 mb-3 bg-slate-50 text-slate-600 border border-slate-200"><i class="fa-solid fa-circle-info mr-1"></i>Xuất dữ liệu toàn trường ở tab <button data-click="switchTab" data-arg="8" class="font-semibold text-teal-700 underline">6. Quản Trị</button>.</p>` : ''}
-      <div class="flex gap-2 flex-wrap"><button data-click="exportCsv" class="${bt} bg-indigo-600 hover:bg-indigo-700">Xuất CSV</button></div>
-      <h3 class="font-bold text-lg mt-6 mb-1"><i class="fa-solid fa-database text-amber-600 mr-1"></i> Sao lưu &amp; khôi phục</h3>
-      <p class="text-xs text-slate-500 mb-3">Dữ liệu lưu trong tài khoản và theo bạn sang thiết bị khác. Bản sao lưu là file riêng phòng khi cần.</p>
-      <div class="flex gap-2 flex-wrap items-center"><button data-click="backup" class="${bt} bg-amber-600 hover:bg-amber-700">Tải bản sao lưu</button>
-        <label class="${bt} bg-slate-700 hover:bg-slate-800 cursor-pointer">Khôi phục<input type="file" accept=".json" hidden data-change="restore"></label>
+      <div class="flex gap-2 flex-wrap"><button data-click="exportCsv" class="${bt} bg-indigo-600 hover:bg-indigo-700">Xuất CSV</button>
         <button data-click="wipe" class="${bt} bg-rose-600 hover:bg-rose-700">Xóa toàn bộ dữ liệu</button></div></div>
   </div>`;
 }
@@ -89,32 +84,19 @@ export async function claimAdmin() {
   show(8);
 }
 export const exportCsv = () => download(`fomo-${S.profile.code}.csv`, toCsv(assessRows()), 'text/csv');
-export const backup = () => download(`fomo-sao-luu-${today()}.json`, JSON.stringify(S, null, 1));
 export function wipe() {
   if (!confirm('Xóa toàn bộ dữ liệu trong tài khoản, trên mọi thiết bị? Không thể hoàn tác.')) return;
-  if (!confirm('Chắc chắn xóa? Hãy tải bản sao lưu trước nếu cần.')) return;
+  if (!confirm('Chắc chắn xóa? Điểm, lộ trình và Góc Ẩn Danh sẽ mất vĩnh viễn.')) return;
   const { profile, reminder } = S;
   setS(Object.assign(blank(), { profile, reminder }));
   save(); toast('Đã xóa dữ liệu.'); render6();
 }
-export function restore(f?: File) {
-  if (!f) return;
-  f.text().then(t => {
-    const d = JSON.parse(t) as { assessments?: unknown } | null;
-    if (!d || !Array.isArray(d.assessments)) throw new Error('bad');
-    if (!confirm('Khôi phục sẽ thay thế dữ liệu hiện tại trong tài khoản. Tiếp tục?')) return;
-    setS(Object.assign(blank(), { profile: S.profile, reminder: S.reminder }, sanitizeData(d)));
-    save(); toast('Đã khôi phục.'); render6();
-  }).catch(() => toast('File sao lưu không hợp lệ.'));
-}
 
 registerActions({
-  backup: () => backup(),
   changePassword: () => changePassword(),
   claimAdmin: () => claimAdmin(),
   claimTeacher: () => claimTeacher(),
   exportCsv: () => exportCsv(),
-  restore: ({ el }) => restore(el.files?.[0]),
   saveProfile: () => saveProfile(),
   wipe: () => wipe(),
 });
