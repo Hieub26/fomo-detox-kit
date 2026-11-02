@@ -7,7 +7,7 @@ import { byDate, groupScore, levelIdx, lvBadge } from '../quiz/scoring';
 import { tab } from '../shell/navigation';
 import { TABLES, fetchAllRows } from '../sync/sync';
 import { randomPassword } from '../teacher/view';
-import { $, bt, card, download, esc, fmtDate, toCsv, toast } from '../../lib/dom';
+import { $, bt, card, daysBetween, download, esc, fmtDate, toCsv, toast } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
 import { sb } from '../../lib/supabase';
 
@@ -305,18 +305,23 @@ async function rotate(kind: 'teacher' | 'admin') {
 // Dữ liệu cho phân tích nghiên cứu: mỗi dòng là một lần làm trắc nghiệm của học sinh, kèm đáp án từng câu.
 // Không có họ tên hay tên đăng nhập: mỗi học sinh được đánh mã HS001, HS002... theo thứ tự cố định trong lần xuất.
 // Mã chỉ ổn định trong cùng một lần xuất; nếu có tài khoản mới thì mã có thể dịch chuyển.
+// Tên lớp và ngày thật giúp đoán ra học sinh, nên lớp được đánh mã LOP01, LOP02... theo thứ tự không liên quan tên lớp,
+// còn ngày đổi thành số ngày kể từ lần làm đầu tiên của học sinh đó.
 export function exportResearch() {
   const students = byRole('student').slice().sort((a, b) => (a.id < b.id ? -1 : 1));
-  const head = ['ma_hs', 'lop', 'da_xac_nhan_lop', 'lan_thu', 'ngay', 'loai', 'lo_trinh_ngay', 'lo_trinh_trang_thai', 'lo_trinh_phan_tram',
+  const classCodes = new Map<string, string>();
+  students.forEach(s => { if (s.class_name && !classCodes.has(s.class_name)) classCodes.set(s.class_name, 'LOP' + String(classCodes.size + 1).padStart(2, '0')); });
+  const head = ['ma_hs', 'ma_lop', 'da_xac_nhan_lop', 'lan_thu', 'so_ngay_tu_lan_dau', 'loai', 'lo_trinh_ngay', 'lo_trinh_trang_thai', 'lo_trinh_phan_tram',
     'tong_diem_10_40', 'muc', ...GROUPS.map((_, i) => 'nhom_' + (i + 1)), ...Array.from({ length: 10 }, (_, i) => 'c' + (i + 1))];
   const rows: (string | number)[][] = [];
   students.forEach((s, n) => {
     const code = 'HS' + String(n + 1).padStart(3, '0'), ps = A.programs[s.id] || [];
-    (A.assess[s.id] || []).forEach((a, k) => {
+    const list = A.assess[s.id] || [];
+    list.forEach((a, k) => {
       // "truoc": điểm gốc của một lộ trình; "sau": khảo sát sau lộ trình; "thuong": làm lại ngoài lộ trình.
       const pre = ps.find(p => p.preId === a.id), post = ps.find(p => p.postId === a.id) || (a.kind === 'sau' ? ps.find(p => p.id === a.programId) : undefined);
       const p = post || pre;
-      rows.push([code, s.class_name || '', s.approved ? 1 : 0, k + 1, a.date.slice(0, 10), post ? 'sau' : pre ? 'truoc' : 'thuong',
+      rows.push([code, classCodes.get(s.class_name || '') || '', s.approved ? 1 : 0, k + 1, daysBetween(list[0].date.slice(0, 10), a.date.slice(0, 10)), post ? 'sau' : pre ? 'truoc' : 'thuong',
         p ? p.days : '', p ? p.status : '', p ? pct(p) : '', a.score, LEVELS[levelIdx(a.score)].short,
         ...GROUPS.map(g => groupScore(a.answers, g)), ...a.answers]);
     });
