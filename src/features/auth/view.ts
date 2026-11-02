@@ -1,6 +1,6 @@
 import { enterApp } from './session';
 import { $, esc, toast } from '../../lib/dom';
-import { expose } from '../../lib/expose';
+import { registerActions } from '../../lib/actions';
 import { USERNAME_EMAIL_DOMAIN, isConfigured, sb } from '../../lib/supabase';
 
 export const USERNAME_RE = /^[a-z0-9_.]{3,30}$/;
@@ -38,7 +38,7 @@ export function renderAuth(message?: string) {
   const signup = authMode === 'signup';
   box.innerHTML = authFrame(`
     <div class="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-xl mb-5" role="tablist">
-      ${[['login', 'Đăng nhập'], ['signup', 'Đăng ký']].map(m => `<button type="button" role="tab" aria-selected="${authMode === m[0]}" onclick="setAuthMode('${m[0]}')" class="py-2 rounded-lg text-sm font-semibold transition ${authMode === m[0] ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500'}">${m[1]}</button>`).join('')}
+      ${[['login', 'Đăng nhập'], ['signup', 'Đăng ký']].map(m => `<button type="button" role="tab" aria-selected="${authMode === m[0]}" data-click="setAuthMode" data-arg="${m[0]}" class="py-2 rounded-lg text-sm font-semibold transition ${authMode === m[0] ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500'}">${m[1]}</button>`).join('')}
     </div>
     <div id="authMsg" role="alert" class="${message ? '' : 'hidden'} mb-4 text-sm rounded-xl px-3 py-2 bg-rose-50 text-rose-800 border border-rose-200">${esc(message || '')}</div>
     <form id="authForm" novalidate class="space-y-3">
@@ -49,7 +49,7 @@ export function renderAuth(message?: string) {
       <div><label class="${authLabel}" for="afPass">Mật khẩu</label><input id="afPass" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" maxlength="72" class="${authInput}">
         ${signup ? '<p class="text-[11px] text-slate-500 mt-1">Ít nhất 8 ký tự.</p>' : ''}</div>
       ${signup ? `<div><label class="${authLabel}" for="afPass2">Nhập lại mật khẩu</label><input id="afPass2" type="password" autocomplete="new-password" maxlength="72" class="${authInput}"></div>
-      <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer"><input id="afTeacher" type="checkbox" class="accent-teal-600" onchange="toggleTeacherFields(this.checked)"> Tôi là giáo viên</label>
+      <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer"><input id="afTeacher" type="checkbox" class="accent-teal-600" data-change="toggleTeacherFields"> Tôi là giáo viên</label>
       <div id="afClassWrap"><label class="${authLabel}" for="afClass">Lớp</label><input id="afClass" maxlength="20" placeholder="Ví dụ: 8A2" class="${authInput}"></div>
       <div id="afCodeWrap" class="hidden"><label class="${authLabel}" for="afCode">Mã giáo viên</label><input id="afCode" autocomplete="off" spellcheck="false" class="${authInput}"></div>` : ''}
       <button id="afSubmit" class="w-full py-3 bg-gradient-to-r from-teal-600 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:opacity-95 transition">${signup ? 'Tạo tài khoản' : 'Đăng nhập'}</button>
@@ -118,4 +118,7 @@ export async function submitAuth(e: Event) {
   }
 }
 
-expose({ setAuthMode, toggleTeacherFields });
+registerActions({
+  setAuthMode: ({ arg }) => setAuthMode(arg),
+  toggleTeacherFields: ({ el }) => toggleTeacherFields(el.checked),
+});

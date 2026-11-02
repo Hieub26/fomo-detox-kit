@@ -1,5 +1,5 @@
 import { $, card, toast, uid } from '../../lib/dom';
-import { expose } from '../../lib/expose';
+import { registerActions } from '../../lib/actions';
 import { S, save } from '../../state/store';
 
 export const SOUNDS: Record<string, { name: string; desc: string; icon: string }> = {
@@ -123,17 +123,17 @@ export function render4() {
     <div id="playerWrap" class="max-w-2xl mx-auto mt-8 bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden"><div class="flex flex-col items-center text-center">
       <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-teal-500 to-indigo-500 flex items-center justify-center pulse-animation mb-4 shadow-lg shadow-teal-500/20"><i id="currentAudioIcon" class="fa-solid fa-water text-3xl text-white"></i></div>
       <h3 id="currentAudioTitle" class="text-xl font-bold text-white"></h3><p id="currentAudioDesc" class="text-xs text-slate-400 mt-1"></p>
-      <div class="flex items-center gap-6 my-6"><button onclick="toggleAudioPlay()" id="playPauseBtn" aria-label="Phát hoặc tạm dừng" class="w-16 h-16 bg-teal-500 hover:bg-teal-400 text-slate-900 rounded-full flex items-center justify-center text-2xl font-bold transition shadow-lg"></button>
-        <button onclick="stopSound()" aria-label="Dừng" class="w-11 h-11 bg-slate-700 hover:bg-slate-600 rounded-full text-sm"><i class="fa-solid fa-stop"></i></button></div>
+      <div class="flex items-center gap-6 my-6"><button data-click="toggleAudioPlay" id="playPauseBtn" aria-label="Phát hoặc tạm dừng" class="w-16 h-16 bg-teal-500 hover:bg-teal-400 text-slate-900 rounded-full flex items-center justify-center text-2xl font-bold transition shadow-lg"></button>
+        <button data-click="stopSound" aria-label="Dừng" class="w-11 h-11 bg-slate-700 hover:bg-slate-600 rounded-full text-sm"><i class="fa-solid fa-stop"></i></button></div>
       <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-800 text-xs">
         <div class="flex items-center justify-center gap-2"><i class="fa-solid fa-clock text-teal-400"></i><span>Hẹn giờ tắt:</span>
-          <select id="sleepTimerSelect" onchange="setAudioTimer()" class="bg-slate-800 text-white rounded border border-slate-700 px-2 py-1">${[[0, 'Tắt hẹn giờ'], [15, '15 phút'], [30, '30 phút'], [45, '45 phút']].map(o => `<option value="${o[0]}" ${AU.timerMin === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select></div>
+          <select id="sleepTimerSelect" data-change="setAudioTimer" class="bg-slate-800 text-white rounded border border-slate-700 px-2 py-1">${[[0, 'Tắt hẹn giờ'], [15, '15 phút'], [30, '30 phút'], [45, '45 phút']].map(o => `<option value="${o[0]}" ${AU.timerMin === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select></div>
         <div class="flex items-center justify-center gap-2"><i class="fa-solid fa-volume-high text-teal-400"></i><span>Âm lượng:</span>
-          <input type="range" min="0" max="1" step="0.05" value="${AU.vol}" oninput="changeVolume(this.value)" class="w-24 accent-teal-500"></div>
+          <input type="range" min="0" max="1" step="0.05" value="${AU.vol}" data-input="changeVolume" class="w-24 accent-teal-500"></div>
       </div></div></div>
     <div class="max-w-3xl mx-auto mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">${lib.map(l => {
       const c = LC[l[1]].split('|'), s = SOUNDS[l[0]];
-      return `<button onclick="selectSound('${l[0]}')" class="p-4 rounded-xl border border-slate-200 ${c[0]} text-left transition flex items-center gap-3">
+      return `<button data-click="selectSound" data-arg="${l[0]}" class="p-4 rounded-xl border border-slate-200 ${c[0]} text-left transition flex items-center gap-3">
         <div class="w-10 h-10 rounded-lg ${c[1]} flex items-center justify-center text-lg shrink-0"><i class="fa-solid ${s.icon}"></i></div>
         <div><h4 class="font-bold text-sm text-slate-800">${s.name}</h4><p class="text-xs text-slate-500">${l[2]}</p></div></button>`;
     }).join('')}</div>
@@ -142,4 +142,10 @@ export function render4() {
   renderPlayer();
 }
 
-expose({ changeVolume, selectSound, setAudioTimer, stopSound, toggleAudioPlay });
+registerActions({
+  changeVolume: ({ el }) => changeVolume(el.value),
+  selectSound: ({ arg }) => selectSound(arg),
+  setAudioTimer: () => setAudioTimer(),
+  stopSound: () => stopSound(),
+  toggleAudioPlay: () => toggleAudioPlay(),
+});

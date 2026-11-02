@@ -6,7 +6,7 @@ import { show } from '../shell/navigation';
 import { sanitizeData } from '../sync/sanitize';
 import { Sync } from '../sync/sync';
 import { $, bt, card, download, esc, inp, toCsv, toast, today } from '../../lib/dom';
-import { expose } from '../../lib/expose';
+import { registerActions } from '../../lib/actions';
 import { sb } from '../../lib/supabase';
 import { S, blank, save, setS } from '../../state/store';
 
@@ -29,26 +29,26 @@ export function render6() {
       <label class="block text-xs font-semibold text-slate-600 mb-1">Tên đăng nhập</label><input class="${inp} mb-3 bg-slate-50 text-slate-500" value="${esc(S.profile.code)}" disabled>
       <label class="block text-xs font-semibold text-slate-600 mb-1" for="pname">Họ tên</label><input id="pname" maxlength="100" class="${inp} mb-3" value="${esc(S.profile.name)}">
       ${teacher ? '' : `<label class="block text-xs font-semibold text-slate-600 mb-1" for="pcls">Lớp</label><input id="pcls" maxlength="20" class="${inp} mb-3" value="${esc(S.profile.cls)}">`}
-      <div class="flex gap-2 flex-wrap"><button onclick="saveProfile()" class="${bt} bg-teal-600 hover:bg-teal-700">Lưu hồ sơ</button>
-        <button onclick="logout()" class="${bt} bg-slate-700 hover:bg-slate-800"><i class="fa-solid fa-right-from-bracket mr-1"></i> Đăng xuất</button></div>
+      <div class="flex gap-2 flex-wrap"><button data-click="saveProfile" class="${bt} bg-teal-600 hover:bg-teal-700">Lưu hồ sơ</button>
+        <button data-click="logout" class="${bt} bg-slate-700 hover:bg-slate-800"><i class="fa-solid fa-right-from-bracket mr-1"></i> Đăng xuất</button></div>
       <h3 class="font-bold text-lg mt-6 mb-3"><i class="fa-solid fa-key text-amber-600 mr-1"></i> Đổi mật khẩu</h3>
       <label class="block text-xs font-semibold text-slate-600 mb-1" for="pnew">Mật khẩu mới (ít nhất 8 ký tự)</label><input id="pnew" type="password" autocomplete="new-password" maxlength="72" class="${inp} mb-3">
-      <button onclick="changePassword()" class="${bt} bg-amber-600 hover:bg-amber-700">Đổi mật khẩu</button>
+      <button data-click="changePassword" class="${bt} bg-amber-600 hover:bg-amber-700">Đổi mật khẩu</button>
       ${teacher ? '' : `<h3 class="font-bold text-lg mt-6 mb-1"><i class="fa-solid fa-chalkboard-user text-indigo-600 mr-1"></i> Tài khoản giáo viên</h3>
       <p class="text-xs text-slate-500 mb-2">Chỉ dành cho giáo viên có mã do nhà trường cấp.</p>
-      <div class="flex gap-2"><input id="pcode" autocomplete="off" spellcheck="false" aria-label="Mã giáo viên" placeholder="Mã giáo viên" class="${inp}"><button onclick="claimTeacher()" class="${bt} bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap">Xác nhận</button></div>`}
+      <div class="flex gap-2"><input id="pcode" autocomplete="off" spellcheck="false" aria-label="Mã giáo viên" placeholder="Mã giáo viên" class="${inp}"><button data-click="claimTeacher" class="${bt} bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap">Xác nhận</button></div>`}
     </div>
     <div class="${card}"><h3 class="font-bold text-lg mb-1"><i class="fa-solid fa-file-export text-indigo-600 mr-1"></i> Xuất kết quả</h3>
       <p class="text-xs text-slate-500 mb-3">File gồm điểm trắc nghiệm và tiến độ lộ trình. Không gồm Góc Ẩn Danh.</p>
-      <div class="flex gap-2 flex-wrap"><button onclick="exportCsv()" class="${bt} bg-indigo-600 hover:bg-indigo-700">Xuất CSV</button><button onclick="exportJson()" class="${bt} bg-indigo-600 hover:bg-indigo-700">Xuất JSON</button></div>
+      <div class="flex gap-2 flex-wrap"><button data-click="exportCsv" class="${bt} bg-indigo-600 hover:bg-indigo-700">Xuất CSV</button><button data-click="exportJson" class="${bt} bg-indigo-600 hover:bg-indigo-700">Xuất JSON</button></div>
       <h3 class="font-bold text-lg mt-6 mb-1"><i class="fa-solid fa-database text-amber-600 mr-1"></i> Sao lưu &amp; khôi phục</h3>
       <p class="text-xs text-slate-500 mb-3">Dữ liệu lưu trong tài khoản và theo bạn sang thiết bị khác. Bản sao lưu là file riêng phòng khi cần.</p>
-      <div class="flex gap-2 flex-wrap items-center"><button onclick="backup()" class="${bt} bg-amber-600 hover:bg-amber-700">Tải bản sao lưu</button>
-        <label class="${bt} bg-slate-700 hover:bg-slate-800 cursor-pointer">Khôi phục<input type="file" accept=".json" hidden onchange="restore(this.files[0])"></label>
-        <button onclick="wipe()" class="${bt} bg-rose-600 hover:bg-rose-700">Xóa toàn bộ dữ liệu</button></div></div>
+      <div class="flex gap-2 flex-wrap items-center"><button data-click="backup" class="${bt} bg-amber-600 hover:bg-amber-700">Tải bản sao lưu</button>
+        <label class="${bt} bg-slate-700 hover:bg-slate-800 cursor-pointer">Khôi phục<input type="file" accept=".json" hidden data-change="restore"></label>
+        <button data-click="wipe" class="${bt} bg-rose-600 hover:bg-rose-700">Xóa toàn bộ dữ liệu</button></div></div>
     ${teacher ? `<div class="${card} lg:col-span-2"><h3 class="font-bold text-lg mb-1"><i class="fa-solid fa-chalkboard-user text-teal-600 mr-1"></i> Tổng hợp từ file</h3>
       <p class="text-xs text-slate-500 mb-3">Chọn nhiều file JSON do học sinh nộp để xem tổng hợp. Dữ liệu chỉ xử lý trên máy này, không gửi đi đâu.</p>
-      <input type="file" accept=".json" multiple onchange="teacherImport(this.files)" class="text-sm"><div id="tout" class="mt-4"></div></div>` : ''}
+      <input type="file" accept=".json" multiple data-change="teacherImport" class="text-sm"><div id="tout" class="mt-4"></div></div>` : ''}
   </div>`;
 }
 export async function saveProfile() {
@@ -118,4 +118,14 @@ export function teacherImport(files: FileList) {
   });
 }
 
-expose({ backup, changePassword, claimTeacher, exportCsv, exportJson, restore, saveProfile, teacherImport, wipe });
+registerActions({
+  backup: () => backup(),
+  changePassword: () => changePassword(),
+  claimTeacher: () => claimTeacher(),
+  exportCsv: () => exportCsv(),
+  exportJson: () => exportJson(),
+  restore: ({ el }) => restore(el.files?.[0]),
+  saveProfile: () => saveProfile(),
+  teacherImport: ({ el }) => { if (el.files) teacherImport(el.files); },
+  wipe: () => wipe(),
+});

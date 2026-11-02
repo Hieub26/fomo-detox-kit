@@ -3,7 +3,7 @@ import { bootApp } from '../shell/navigation';
 import { offerLegacyImport } from '../sync/sanitize';
 import { Sync, cacheKey, refreshIfSafe } from '../sync/sync';
 import { $ } from '../../lib/dom';
-import { expose } from '../../lib/expose';
+import { registerActions } from '../../lib/actions';
 import { isConfigured, sb } from '../../lib/supabase';
 
 export async function enterApp(user: { id: string }) {
@@ -47,4 +47,6 @@ export async function start() {
   else renderAuth(msg);
 }
 
-expose({ logout });
+registerActions({
+  logout: () => logout(),
+});

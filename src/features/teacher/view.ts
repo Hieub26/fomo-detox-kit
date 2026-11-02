@@ -6,7 +6,7 @@ import { byDate, levelIdx, lvBadge } from '../quiz/scoring';
 import { tab } from '../shell/navigation';
 import { Sync, TABLES, fetchAllRows } from '../sync/sync';
 import { $, bt, card, download, esc, fmtDate, inp, toCsv, toast } from '../../lib/dom';
-import { expose } from '../../lib/expose';
+import { registerActions } from '../../lib/actions';
 import { sb } from '../../lib/supabase';
 
 interface Student { id: string; username: string; full_name: string; class_name: string | null }
@@ -68,8 +68,8 @@ export function drawTeacher() {
       <p class="text-xs text-slate-500 mb-3">Thêm tên lớp bạn phụ trách. Học sinh đăng ký đúng tên lớp sẽ hiện bên dưới. Giáo viên không xem được Góc Ẩn Danh.</p>
       <div class="flex flex-wrap gap-2 items-center mb-3">${T.classes.length ? T.classes.map(c => `
         <span class="flex items-center gap-1.5 bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold pl-3 pr-1 py-1 rounded-full">${esc(c)}
-          <button onclick="removeClass(this.dataset.c)" data-c="${esc(c)}" aria-label="Bỏ lớp ${esc(c)}" class="w-6 h-6 rounded-full hover:bg-teal-100"><i class="fa-solid fa-xmark"></i></button></span>`).join('') : '<span class="text-sm text-slate-400">Chưa có lớp nào.</span>'}</div>
-      <form onsubmit="addClass(event)" class="flex gap-2 max-w-sm">
+          <button data-click="removeClass" data-arg="${esc(c)}" aria-label="Bỏ lớp ${esc(c)}" class="w-6 h-6 rounded-full hover:bg-teal-100"><i class="fa-solid fa-xmark"></i></button></span>`).join('') : '<span class="text-sm text-slate-400">Chưa có lớp nào.</span>'}</div>
+      <form data-submit="addClass" class="flex gap-2 max-w-sm">
         <input id="newClass" maxlength="20" placeholder="Ví dụ: 8A2" aria-label="Tên lớp mới" class="${inp}">
         <button class="${bt} bg-teal-600 hover:bg-teal-700 whitespace-nowrap">Thêm lớp</button></form>
     </div>
@@ -83,10 +83,10 @@ export function drawTeacher() {
       <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
         <h3 class="font-bold text-lg text-slate-800">Kết Quả Học Sinh</h3>
         <div class="flex gap-2 items-center">
-          <select onchange="filterClass(this.value)" aria-label="Lọc theo lớp" class="border border-slate-200 rounded-lg px-2 py-1.5 text-sm">
+          <select data-change="filterClass" aria-label="Lọc theo lớp" class="border border-slate-200 rounded-lg px-2 py-1.5 text-sm">
             <option value="">Tất cả lớp</option>${T.classes.map(c => `<option value="${esc(c)}" ${T.filter === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
-          <button onclick="exportClassCsv()" class="${bt} bg-indigo-600 hover:bg-indigo-700 !py-1.5">Xuất CSV</button>
-          <button onclick="render7()" aria-label="Tải lại" title="Tải lại" class="w-9 h-9 border border-slate-200 rounded-lg hover:bg-slate-50"><i class="fa-solid fa-rotate-right text-slate-500"></i></button>
+          <button data-click="exportClassCsv" class="${bt} bg-indigo-600 hover:bg-indigo-700 !py-1.5">Xuất CSV</button>
+          <button data-click="render7" aria-label="Tải lại" title="Tải lại" class="w-9 h-9 border border-slate-200 rounded-lg hover:bg-slate-50"><i class="fa-solid fa-rotate-right text-slate-500"></i></button>
         </div>
       </div>
       ${rows.length ? `<div class="overflow-x-auto custom-scrollbar"><table class="w-full text-sm text-left whitespace-nowrap">
@@ -98,7 +98,7 @@ export function drawTeacher() {
           <td class="pr-3 font-semibold ${r.change !== null && r.change < 0 ? 'text-emerald-600' : r.change !== null && r.change > 0 ? 'text-rose-600' : ''}">${r.change === null ? '–' : r.change > 0 ? '+' + r.change : r.change}</td>
           <td class="pr-3">${r.last ? lvBadge(r.last.score) : '–'}</td>
           <td class="pr-3">${r.program ? `${r.program.days} ngày • ${r.percent}%` : '–'}</td>
-          <td class="text-right"><button onclick="selectStudent('${r.s.id}')" class="px-2.5 py-1 border border-slate-200 rounded-lg text-xs hover:bg-slate-50">Chi tiết</button></td></tr>`).join('')}
+          <td class="text-right"><button data-click="selectStudent" data-arg="${esc(r.s.id)}" class="px-2.5 py-1 border border-slate-200 rounded-lg text-xs hover:bg-slate-50">Chi tiết</button></td></tr>`).join('')}
       </table></div>` : `<p class="text-sm text-slate-500">${T.classes.length ? 'Chưa có học sinh nào đăng ký vào lớp này.' : 'Thêm lớp để xem học sinh.'}</p>`}
     </div>
     ${studentDetail()}`;
@@ -118,7 +118,7 @@ export function studentDetail() {
   return `<div class="${card}">
     <div class="flex items-center justify-between flex-wrap gap-2">
       <h3 class="font-bold text-lg text-slate-800">${esc(s.full_name || s.username)} <span class="text-xs font-normal text-slate-500">(${esc(s.username)} • ${esc(s.class_name || '')})</span></h3>
-      <button onclick="resetStudentPassword('${s.id}')" class="${bt} bg-slate-700 hover:bg-slate-800 !py-1.5"><i class="fa-solid fa-key mr-1"></i> Đặt lại mật khẩu</button>
+      <button data-click="resetStudentPassword" data-arg="${esc(s.id)}" class="${bt} bg-slate-700 hover:bg-slate-800 !py-1.5"><i class="fa-solid fa-key mr-1"></i> Đặt lại mật khẩu</button>
     </div>
     ${T.tempPass && T.tempPass.id === s.id ? `<div class="mt-3 text-sm rounded-xl px-3 py-2 bg-amber-50 text-amber-900 border border-amber-200">Mật khẩu mới: <code class="font-bold select-all">${esc(T.tempPass.value)}</code>. Hãy đưa riêng cho học sinh và nhắc đổi lại ở mục Hồ sơ. Mật khẩu chỉ hiện một lần.</div>` : ''}
     ${as.length ? `<div class="max-w-xl mt-3">${lineChart(as)}</div>
@@ -174,4 +174,12 @@ export function exportClassCsv() {
   download(`fomo-lop-${T.filter || 'tat-ca'}.csv`, toCsv([head, ...rows]), 'text/csv');
 }
 
-expose({ addClass, exportClassCsv, filterClass, removeClass, render7, resetStudentPassword, selectStudent });
+registerActions({
+  addClass: ({ event }) => addClass(event),
+  exportClassCsv: () => exportClassCsv(),
+  filterClass: ({ el }) => filterClass(el.value),
+  removeClass: ({ arg }) => removeClass(arg),
+  render7: () => render7(),
+  resetStudentPassword: ({ arg }) => resetStudentPassword(arg),
+  selectStudent: ({ arg }) => selectStudent(arg),
+});

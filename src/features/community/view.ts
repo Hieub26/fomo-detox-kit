@@ -4,7 +4,7 @@ import { MAXSCORE } from '../quiz/content';
 import { assessById, levelIdx, lvBadge, sortedAssess } from '../quiz/scoring';
 import { refresh } from '../shell/navigation';
 import { $, card, esc, fmtDate, toast, today, uid } from '../../lib/dom';
-import { expose } from '../../lib/expose';
+import { registerActions } from '../../lib/actions';
 import { S, save } from '../../state/store';
 
 export const SAMPLE_POSTS = [
@@ -30,7 +30,7 @@ export const BCLS: Record<string, string> = {
 };
 export function progressCard() {
   const list = sortedAssess();
-  if (!list.length) return `<div class="${card}"><h3 class="font-bold text-xl text-slate-800 mb-1">Tiến Trình &amp; Phân Tích</h3><p class="text-sm text-slate-500">Chưa có dữ liệu. <button onclick="switchTab(2)" class="text-teal-600 font-semibold">Làm trắc nghiệm đầu tiên</button> để bắt đầu theo dõi.</p></div>`;
+  if (!list.length) return `<div class="${card}"><h3 class="font-bold text-xl text-slate-800 mb-1">Tiến Trình &amp; Phân Tích</h3><p class="text-sm text-slate-500">Chưa có dữ liệu. <button data-click="switchTab" data-arg="2" class="text-teal-600 font-semibold">Làm trắc nghiệm đầu tiên</button> để bắt đầu theo dõi.</p></div>`;
   const first = list[0], last = list[list.length - 1];
   const overall = list.length > 1 ? `<div class="mt-5 p-4 bg-slate-50 rounded-xl border border-slate-200"><h4 class="font-bold text-sm mb-1">Từ lần đầu đến nay</h4>${compareHtml(first, last)}</div>` : '';
   const progs = S.programs.slice().reverse().map(p => {
@@ -38,7 +38,7 @@ export function progressCard() {
     const st = p.status === 'active' ? 'đang thực hiện' : p.status === 'done' ? 'đã xong' : 'đã dừng';
     return `<div class="mt-3 p-4 border border-slate-200 rounded-xl"><h4 class="font-bold text-sm">Lộ trình ${p.days} ngày • ${fmtDate(p.start)}</h4>
       <p class="text-xs text-slate-500 mb-2">Hoàn thành ${checkedCount(p)}/${p.days} ngày (${pct(p)}%) • ${st}</p>
-      ${pre && post ? compareHtml(pre, post) : `<p class="text-xs text-slate-500">${pre ? 'Chưa có khảo sát sau lộ trình.' : 'Không có điểm gốc trước lộ trình.'}</p>${pre && !post && (checkedCount(p) >= p.days || p.status !== 'active') ? `<button onclick="startPost('${p.id}')" class="mt-2 px-3 py-1.5 bg-teal-600 text-white text-xs font-semibold rounded-lg">Làm khảo sát sau</button>` : ''}`}</div>`;
+      ${pre && post ? compareHtml(pre, post) : `<p class="text-xs text-slate-500">${pre ? 'Chưa có khảo sát sau lộ trình.' : 'Không có điểm gốc trước lộ trình.'}</p>${pre && !post && (checkedCount(p) >= p.days || p.status !== 'active') ? `<button data-click="startPost" data-arg="${esc(p.id)}" class="mt-2 px-3 py-1.5 bg-teal-600 text-white text-xs font-semibold rounded-lg">Làm khảo sát sau</button>` : ''}`}</div>`;
   }).join('');
   const rows = list.slice().reverse().map(a => `<tr class="border-t border-slate-100"><td class="py-1.5">${fmtDate(a.date)}</td><td>${a.kind}</td><td class="font-semibold">${a.score}/${MAXSCORE}</td><td>${lvBadge(a.score)}</td></tr>`).join('');
   return `<div class="${card}"><h3 class="font-bold text-xl text-slate-800 mb-1">Tiến Trình &amp; Phân Tích</h3>
@@ -66,11 +66,11 @@ export function render5() {
     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
       <textarea id="confessionInput" rows="3" maxlength="1500" class="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Viết chia sẻ hoặc trải nghiệm của bạn tại đây... (Hệ thống tự động ẩn danh)"></textarea>
       <div class="flex justify-between items-center mt-3"><span class="text-xs text-slate-400"><i class="fa-solid fa-user-secret mr-1"></i> Không hiển thị tên của bạn</span>
-        <button onclick="postConfession()" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-lg shadow-sm transition"><i class="fa-solid fa-paper-plane mr-1"></i> Gửi Chia Sẻ</button></div></div>
+        <button data-click="postConfession" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-lg shadow-sm transition"><i class="fa-solid fa-paper-plane mr-1"></i> Gửi Chia Sẻ</button></div></div>
     <div class="space-y-4">${S.posts.slice().reverse().map(p => `
       <div class="p-4 rounded-xl border border-teal-100 bg-teal-50/40"><div class="flex justify-between items-center mb-2">
         <span class="text-xs font-bold text-teal-700"><i class="fa-solid fa-user-ninja mr-1"></i> Bạn • Ẩn danh</span>
-        <span class="text-[11px] text-slate-400">${fmtDate(p.date)} <button onclick="delPost('${p.id}')" class="ml-2 text-rose-500" aria-label="Xóa"><i class="fa-solid fa-trash-can"></i></button></span></div>
+        <span class="text-[11px] text-slate-400">${fmtDate(p.date)} <button data-click="delPost" data-arg="${esc(p.id)}" class="ml-2 text-rose-500" aria-label="Xóa"><i class="fa-solid fa-trash-can"></i></button></span></div>
         <p class="text-sm text-slate-700" style="white-space:pre-wrap">${esc(p.text)}</p></div>`).join('')}
       ${SAMPLE_POSTS.map(p => `<div class="p-4 rounded-xl border border-slate-100 bg-slate-50/50"><div class="flex justify-between items-center mb-2">
         <span class="text-xs font-bold ${p.col}"><i class="fa-solid fa-user-ninja mr-1"></i> ${p.who}</span><span class="text-[11px] text-slate-400">${p.when}</span></div>
@@ -88,4 +88,7 @@ export function delPost(id: string) {
   S.posts = S.posts.filter(p => p.id !== id); save(); refresh();
 }
 
-expose({ delPost, postConfession });
+registerActions({
+  delPost: ({ arg }) => delPost(arg),
+  postConfession: () => postConfession(),
+});

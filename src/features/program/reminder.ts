@@ -1,6 +1,6 @@
 import { refresh } from '../shell/navigation';
 import { $, pad, toast } from '../../lib/dom';
-import { expose } from '../../lib/expose';
+import { registerActions } from '../../lib/actions';
 import { S, save } from '../../state/store';
 
 export const REMIND_H = 21, REMIND_M = 30;
@@ -30,4 +30,6 @@ export function toggleReminder() {
   refresh();
 }
 
-expose({ toggleReminder });
+registerActions({
+  toggleReminder: () => toggleReminder(),
+});

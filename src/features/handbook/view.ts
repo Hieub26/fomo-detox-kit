@@ -1,5 +1,5 @@
 import { $, card } from '../../lib/dom';
-import { expose } from '../../lib/expose';
+import { registerActions } from '../../lib/actions';
 
 export const CARDS = [
   ['amber', 'fa-ghost', 'FOMO Là Gì?', '<strong>Fear Of Missing Out (FOMO)</strong> - Nỗi sợ bị bỏ lỡ thông tin, xu hướng hoặc các sự kiện thú vị mà bạn bè đang trải nghiệm. Nó khiến học sinh luôn thôi thúc phải kiểm tra điện thoại từng phút.', 'fa-circle-info', 'Thuật toán MXH liên tục tạo cảm giác gấp gáp để giữ chân bạn lâu nhất có thể!'],
@@ -24,7 +24,7 @@ export function render1() {
         <span class="bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider backdrop-blur-md">Kiến Thức Khoa Học</span>
         <h2 class="text-2xl sm:text-3xl font-bold mt-3 mb-2">Giải Mã Hội Chứng FOMO &amp; Giấc Ngủ Kỹ Thuật Số</h2>
         <p class="text-teal-100 text-sm sm:text-base leading-relaxed">Bạn có cảm giác bồn chồn khi rời xa điện thoại? Bạn trằn trọc lướt TikTok đến 1-2 giờ sáng? Hãy cùng khám phá cơ chế tác động của mạng xã hội tới não bộ và nhịp sinh học của bạn.</p>
-        <button onclick="switchTab(2)" class="mt-4 px-5 py-2.5 bg-white text-teal-700 font-semibold text-sm rounded-xl shadow hover:bg-teal-50 transition"><i class="fa-solid fa-clipboard-question mr-1"></i> Làm trắc nghiệm ngay</button>
+        <button data-click="switchTab" data-arg="2" class="mt-4 px-5 py-2.5 bg-white text-teal-700 font-semibold text-sm rounded-xl shadow hover:bg-teal-50 transition"><i class="fa-solid fa-clipboard-question mr-1"></i> Làm trắc nghiệm ngay</button>
       </div>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">${CARDS.map(c => `
@@ -38,7 +38,7 @@ export function render1() {
       <h3 class="font-bold text-xl text-slate-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-lightbulb text-teal-500"></i> Các Tình Huống Thực Tế Thường Gặp</h3>
       <div class="space-y-3">${SITUATIONS.map((s, i) => `
         <div class="border border-slate-200 rounded-xl overflow-hidden">
-          <button onclick="toggleAccordion(${i})" class="w-full text-left p-4 font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 flex justify-between items-center gap-2"><span>${s[0]}</span><i id="acc-icon-${i}" class="fa-solid fa-chevron-down text-slate-400"></i></button>
+          <button data-click="toggleAccordion" data-arg="${i}" class="w-full text-left p-4 font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 flex justify-between items-center gap-2"><span>${s[0]}</span><i id="acc-icon-${i}" class="fa-solid fa-chevron-down text-slate-400"></i></button>
           <div id="acc-content-${i}" class="hidden p-4 bg-white text-sm text-slate-600 border-t border-slate-100"><strong>Phản ứng FOMO:</strong> ${s[1]}<br><span class="text-teal-600 font-medium">💡 Giải pháp Detox:</span> ${s[2]}</div>
         </div>`).join('')}</div>
     </div>`;
@@ -48,4 +48,6 @@ export function toggleAccordion(i: number) {
   ic.className = hidden ? 'fa-solid fa-chevron-down text-slate-400' : 'fa-solid fa-chevron-up text-teal-600';
 }
 
-expose({ toggleAccordion });
+registerActions({
+  toggleAccordion: ({ arg }) => toggleAccordion(Number(arg)),
+});
