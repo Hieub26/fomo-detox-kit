@@ -26,11 +26,13 @@ export interface Post {
   date: string;
   text: string;
 }
+export type UserRole = 'student' | 'teacher' | 'admin';
 export interface Profile {
   code: string;
   name: string;
   cls: string;
-  role: string;
+  role: UserRole;
+  approved: boolean; // học sinh đã được giáo viên lớp xác nhận
 }
 export interface AppState {
   profile: Profile;

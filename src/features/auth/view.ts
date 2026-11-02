@@ -56,8 +56,8 @@ export function renderAuth(message?: string) {
       <button id="afSubmit" class="w-full py-3 bg-gradient-to-r from-teal-600 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:opacity-95 transition">${signup ? 'Tạo tài khoản' : 'Đăng nhập'}</button>
     </form>
     <p class="text-xs text-slate-500 mt-4 text-center">${signup
-      ? 'Điểm trắc nghiệm và tiến độ lộ trình sẽ lưu trong tài khoản, giáo viên của lớp xem được. Không dùng tên đăng nhập có thông tin riêng tư.'
-      : 'Quên mật khẩu? Nhờ giáo viên của lớp đặt lại giúp bạn.'}</p>`);
+      ? 'Điểm trắc nghiệm và tiến độ lộ trình sẽ lưu trong tài khoản; giáo viên của lớp và quản trị viên nhà trường xem được. Giáo viên sẽ xác nhận bạn vào lớp. Không dùng tên đăng nhập có thông tin riêng tư.'
+      : 'Quên mật khẩu? Học sinh nhờ giáo viên của lớp, giáo viên nhờ quản trị viên đặt lại giúp.'}</p>`);
   $('#authForm').addEventListener('submit', submitAuth);
 }
 export function authFrame(inner: string) {

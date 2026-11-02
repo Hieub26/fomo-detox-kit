@@ -9,7 +9,7 @@ import { $, bt, card, download, esc, fmtDate, inp, toCsv, toast } from '../../li
 import { registerActions } from '../../lib/actions';
 import { sb } from '../../lib/supabase';
 
-interface Student { id: string; username: string; full_name: string; class_name: string | null }
+interface Student { id: string; username: string; full_name: string; class_name: string | null; approved: boolean }
 const T = {
   classes: [] as string[], students: [] as Student[], assess: {} as Record<string, Assessment[]>, programs: {} as Record<string, Program[]>,
   filter: '', selected: null as string | null, tempPass: null as { id: string; value: string } | null, error: ''
@@ -19,7 +19,7 @@ export async function loadTeacherData() {
   const { data: cls, error: e1 } = await sb.from('teacher_classes').select('class_name').eq('teacher_id', Sync.uid!).order('class_name');
   if (e1) throw e1;
   T.classes = cls.map(c => c.class_name);
-  const profiles = await fetchAllRows((from, to) => sb.from('profiles').select('id,username,full_name,class_name').eq('role', 'student').order('class_name').order('full_name').range(from, to));
+  const profiles = await fetchAllRows((from, to) => sb.from('profiles').select('id,username,full_name,class_name,approved').eq('role', 'student').order('class_name').order('full_name').range(from, to));
   T.students = profiles;
   const ids = new Set(profiles.map(p => p.id));
   const group = <R extends { user_id: string }, X>(rows: R[], convert: (r: R) => X) => {
@@ -54,7 +54,9 @@ export function render7() {
 
 export function drawTeacher() {
   if (tab !== 7) return;
-  const rows = T.students.filter(s => !T.filter || s.class_name === T.filter).map(studentSummary);
+  const inFilter = (s: Student) => !T.filter || s.class_name === T.filter;
+  const pending = T.students.filter(s => !s.approved && inFilter(s));
+  const rows = T.students.filter(s => s.approved && inFilter(s)).map(studentSummary); // chỉ tính học sinh đã xác nhận
   const done = rows.filter(r => r.count);
   const high = done.filter(r => levelIdx(r.last.score) === 2).length;
   const changed = rows.filter(r => r.change !== null);
@@ -65,7 +67,7 @@ export function drawTeacher() {
     ${T.error ? `<div class="text-sm rounded-xl px-3 py-2 bg-rose-50 text-rose-800 border border-rose-200">${esc(T.error)}</div>` : ''}
     <div class="${card}">
       <h2 class="font-bold text-xl text-slate-800 mb-1"><i class="fa-solid fa-chalkboard-user text-teal-600 mr-1"></i> Lớp Của Tôi</h2>
-      <p class="text-xs text-slate-500 mb-3">Thêm tên lớp bạn phụ trách. Học sinh đăng ký đúng tên lớp sẽ hiện bên dưới. Giáo viên không xem được Góc Ẩn Danh.</p>
+      <p class="text-xs text-slate-500 mb-3">Thêm tên lớp bạn phụ trách. Học sinh tự khai đúng tên lớp sẽ hiện ở mục Chờ Xác Nhận để bạn xác nhận. Giáo viên không xem được Góc Ẩn Danh.</p>
       <div class="flex flex-wrap gap-2 items-center mb-3">${T.classes.length ? T.classes.map(c => `
         <span class="flex items-center gap-1.5 bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold pl-3 pr-1 py-1 rounded-full">${esc(c)}
           <button data-click="removeClass" data-arg="${esc(c)}" aria-label="Bỏ lớp ${esc(c)}" class="w-6 h-6 rounded-full hover:bg-teal-100"><i class="fa-solid fa-xmark"></i></button></span>`).join('') : '<span class="text-sm text-slate-400">Chưa có lớp nào.</span>'}</div>
@@ -73,8 +75,16 @@ export function drawTeacher() {
         <input id="newClass" maxlength="20" placeholder="Ví dụ: 8A2" aria-label="Tên lớp mới" class="${inp}">
         <button class="${bt} bg-teal-600 hover:bg-teal-700 whitespace-nowrap">Thêm lớp</button></form>
     </div>
+    ${pending.length ? `<div class="${card} !border-amber-200">
+      <h3 class="font-bold text-lg text-slate-800 mb-1"><i class="fa-solid fa-hourglass-half text-amber-600 mr-1"></i> Chờ Xác Nhận (${pending.length})</h3>
+      <p class="text-xs text-slate-500 mb-3">Các tài khoản này tự khai thuộc lớp của bạn. Chỉ xác nhận học sinh bạn biết là của lớp; chưa xác nhận thì không được tính vào thống kê.</p>
+      <div class="divide-y divide-slate-100">${pending.map(s => `<div class="py-2 flex items-center justify-between flex-wrap gap-2">
+        <div><span class="font-semibold text-slate-800">${esc(s.full_name || s.username)}</span> <span class="text-xs text-slate-400">${esc(s.username)} • ${esc(s.class_name || '')}</span></div>
+        <div class="flex gap-2"><button data-click="approveStudent" data-arg="${esc(s.id)}" class="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold">Xác nhận</button>
+          <button data-click="rejectStudent" data-arg="${esc(s.id)}" class="px-3 py-1 border border-slate-200 rounded-lg text-xs hover:bg-slate-50">Không phải lớp tôi</button></div></div>`).join('')}</div>
+    </div>` : ''}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      ${tile('Học sinh', rows.length)}
+      ${tile('Học sinh', rows.length, pending.length ? `${pending.length} chờ xác nhận` : '')}
       ${tile('Đã làm trắc nghiệm', done.length)}
       ${tile('Đang ở mức Cao', high, 'theo lần gần nhất')}
       ${tile('Thay đổi điểm trung bình', avg, 'học sinh có từ 2 lần, âm là tốt hơn')}
@@ -165,9 +175,18 @@ export async function resetStudentPassword(id: string) {
   T.tempPass = { id, value };
   drawTeacher();
 }
+export async function setApproval(id: string, ok: boolean) {
+  const s = T.students.find(x => x.id === id);
+  if (!s) return;
+  if (!ok && !confirm(`Bỏ ${s.full_name || s.username} khỏi lớp ${s.class_name}? Tài khoản vẫn còn, học sinh sẽ cần nhập lại lớp đúng.`)) return;
+  const { error } = await sb.rpc('set_student_approval', { target: id, ok });
+  if (error) { console.error(error); toast('Không cập nhật được. Hãy thử lại.'); return; }
+  toast(ok ? 'Đã xác nhận học sinh vào lớp.' : 'Đã bỏ tài khoản khỏi lớp.');
+  render7();
+}
 export function exportClassCsv() {
   const head = ['ten_dang_nhap', 'ho_ten', 'lop', 'so_lan', 'diem_dau', 'diem_gan_nhat', 'thay_doi', 'muc', 'lo_trinh_ngay', 'phan_tram_hoan_thanh'];
-  const rows = T.students.filter(s => !T.filter || s.class_name === T.filter).map(studentSummary).map(r => [
+  const rows = T.students.filter(s => s.approved && (!T.filter || s.class_name === T.filter)).map(studentSummary).map(r => [
     r.s.username, r.s.full_name, r.s.class_name, r.count, r.first ? r.first.score : '', r.last ? r.last.score : '',
     r.change === null ? '' : r.change, r.last ? LEVELS[levelIdx(r.last.score)].short : '', r.program ? r.program.days : '', r.percent === null ? '' : r.percent
   ]);
@@ -176,6 +195,8 @@ export function exportClassCsv() {
 
 registerActions({
   addClass: ({ event }) => addClass(event),
+  approveStudent: ({ arg }) => setApproval(arg, true),
+  rejectStudent: ({ arg }) => setApproval(arg, false),
   exportClassCsv: () => exportClassCsv(),
   filterClass: ({ el }) => filterClass(el.value),
   removeClass: ({ arg }) => removeClass(arg),

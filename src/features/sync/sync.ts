@@ -3,7 +3,7 @@ import { appReady, refresh, tab } from '../shell/navigation';
 import { $ } from '../../lib/dom';
 import { sb } from '../../lib/supabase';
 import { S, blank, setS } from '../../state/store';
-import type { AppState, Assessment, AudioSession, Post, Program } from '../../types';
+import type { AppState, Assessment, AudioSession, Post, Program, UserRole } from '../../types';
 import type { Database } from '../../types/database';
 
 export const LEGACY_KEY = 'fomo_detox_kit_v2'; // dữ liệu của bản cũ, khi app chưa có tài khoản
@@ -154,11 +154,12 @@ export const Sync = {
     let changed = false, ok = true;
     try {
       const [{ data: me, error }, merges] = await Promise.all([
-        sb.from('profiles').select('username,full_name,class_name,role').eq('id', uid).single(),
+        sb.from('profiles').select('username,full_name,class_name,role,approved').eq('id', uid).single(),
         Promise.all(GROUPS_KEYS.map(key => this.fetchGroup(key, uid)))
       ]);
       if (error) throw error;
-      const prof = { code: me.username, name: me.full_name, cls: me.class_name || '', role: me.role };
+      // CHECK trong database đảm bảo role là một trong các giá trị của UserRole.
+      const prof = { code: me.username, name: me.full_name, cls: me.class_name || '', role: me.role as UserRole, approved: me.approved };
       if (JSON.stringify(prof) !== JSON.stringify(S.profile)) { changed = true; S.profile = prof; }
       for (const merge of merges) changed = merge() || changed;
       this.persist();
@@ -203,7 +204,7 @@ export function setSyncBadge(state: 'ok' | 'pending' | 'off' | 'error') {
 // Lấy lại dữ liệu mới khi quay lại app, không làm mất nội dung đang nhập.
 export function refreshIfSafe() {
   const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
-  if (appReady && !typing && !$('#fomoForm') && tab !== 7) refresh();
+  if (appReady && !typing && !$('#fomoForm') && tab < 7) refresh(); // tab Lớp và Quản trị tự tải dữ liệu riêng
 }
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') Sync.pull().then(c => { if (c) refreshIfSafe(); });

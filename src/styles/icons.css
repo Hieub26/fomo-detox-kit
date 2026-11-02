@@ -26,7 +26,6 @@
 .fa-award::before { content: "\f559"; }
 .fa-bed::before { content: "\f236"; }
 .fa-bell::before { content: "\f0f3"; }
-.fa-bell-concierge::before { content: "\f562"; }
 .fa-bell-slash::before { content: "\f1f6"; }
 .fa-book-open::before { content: "\f518"; }
 .fa-brain::before { content: "\f5dc"; }
@@ -36,6 +35,7 @@
 .fa-chart-line::before { content: "\f201"; }
 .fa-chevron-down::before { content: "\f078"; }
 .fa-chevron-up::before { content: "\f077"; }
+.fa-circle-check::before { content: "\f058"; }
 .fa-circle-info::before { content: "\f05a"; }
 .fa-clipboard-question::before { content: "\e4e3"; }
 .fa-clock::before { content: "\f017"; }
@@ -49,7 +49,9 @@
 .fa-floppy-disk::before { content: "\f0c7"; }
 .fa-ghost::before { content: "\f6e2"; }
 .fa-graduation-cap::before { content: "\f19d"; }
+.fa-hand-holding-heart::before { content: "\f4be"; }
 .fa-headphones::before { content: "\f025"; }
+.fa-hourglass-half::before { content: "\f252"; }
 .fa-id-card::before { content: "\f2c2"; }
 .fa-key::before { content: "\f084"; }
 .fa-lightbulb::before { content: "\f0eb"; }
@@ -70,8 +72,10 @@
 .fa-trash-can::before { content: "\f2ed"; }
 .fa-triangle-exclamation::before { content: "\f071"; }
 .fa-user-gear::before { content: "\f4fe"; }
+.fa-user-graduate::before { content: "\f501"; }
 .fa-user-ninja::before { content: "\f504"; }
 .fa-user-secret::before { content: "\f21b"; }
+.fa-user-shield::before { content: "\f505"; }
 .fa-volume-high::before { content: "\f028"; }
 .fa-water::before { content: "\f773"; }
 .fa-xmark::before { content: "\f00d"; }

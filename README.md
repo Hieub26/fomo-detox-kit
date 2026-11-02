@@ -23,6 +23,14 @@ Tạo mã giáo viên (mã chỉ hiện một lần, chạy lại sẽ đổi m�
 docker exec supabase_db_fomo_detox_kit psql -U postgres -At -c "select private.rotate_teacher_code()"
 ```
 
+Tạo tài khoản quản trị đầu tiên: đăng ký một tài khoản trên web, rồi nâng quyền bằng SQL (thay `ten_dang_nhap`):
+
+```bash
+docker exec supabase_db_fomo_detox_kit psql -U postgres -c "update public.profiles set role = 'admin', class_name = null where username = 'ten_dang_nhap'"
+```
+
+Sau đó quản trị viên đổi mã giáo viên và mã quản trị ngay trên web (tab Quản Trị). Cũng có thể đặt mã quản trị bằng SQL: `select private.set_admin_code('<mã dài ít nhất 12 ký tự>')`, rồi người có mã nhập ở mục Hồ sơ → Tài khoản quản trị.
+
 Sau khi đổi migration, chạy `npm run db:types` để sinh lại `src/types/database.ts`. Không sửa tay file này.
 
 ## Cấu trúc
@@ -49,10 +57,17 @@ supabase/           cấu hình và migration của database
 3. Vào Authentication → Providers → Email, đặt độ dài mật khẩu tối thiểu là 8.
 4. Áp dụng database: `npx supabase link --project-ref <ref>` rồi `npx supabase db push`.
 5. Trong SQL Editor, chạy `select private.rotate_teacher_code();` để lấy mã giáo viên. Chỉ đưa mã này cho giáo viên.
+   Nâng tài khoản quản trị đầu tiên: `update public.profiles set role = 'admin', class_name = null where username = 'ten_dang_nhap';`
 6. Tạo `.env.production` từ `.env.example`: điền URL và khóa **publishable/anon** của project. Không bao giờ đặt `service_role` hoặc secret key vào đó.
 7. Chạy `npm run build` rồi đưa thư mục `dist/` lên một hosting có HTTPS.
 
 Không đổi `VITE_USERNAME_EMAIL_DOMAIN` sau khi đã có tài khoản, vì mọi người sẽ không đăng nhập được nữa.
+
+## Trước khi dùng thật
+
+- Điền thông tin thật của phòng tư vấn tâm lý (phòng, giờ, người phụ trách) vào `SUPPORT` trong `src/features/quiz/content.ts`. Thông tin này hiện cho học sinh có kết quả mức Cao.
+- Điểm trắc nghiệm: câu 10 ("muốn thay đổi thói quen") được tính ngược (5 trừ đáp án), tổng vẫn 10–40 với ngưỡng 18/28. Migration `20261102020000_review_fixes.sql` tính lại điểm đã lưu theo cách này.
+- 10 câu hỏi do nhóm tự xây dựng, tham khảo FOMO-S và PSQI; đây không phải thang đo chuẩn hóa nguyên bản.
 
 ## Quyền truy cập
 
@@ -61,11 +76,15 @@ Quyền do Row Level Security trên máy chủ quyết định, không phải gi
 - Học sinh chỉ đọc và sửa dữ liệu của mình.
 - Giáo viên chỉ đọc được điểm và lộ trình của học sinh thuộc các lớp đã thêm, và không sửa được.
 - Góc Ẩn Danh chỉ người viết đọc được qua app.
-- Tài khoản chỉ thành giáo viên khi có mã giáo viên.
+- Tài khoản chỉ thành giáo viên khi có mã giáo viên hoặc được quản trị viên chỉ định.
+- Ai cũng tự đăng ký và tự khai lớp được, nên học sinh chỉ được tính vào lớp sau khi giáo viên lớp đó (hoặc quản trị viên) xác nhận. Đổi lớp thì phải xác nhận lại. Giáo viên vẫn xem được tài khoản đang chờ để quyết định.
+- Quản trị viên xóa được tài khoản học sinh và giáo viên; mọi dữ liệu của tài khoản (kể cả Góc Ẩn Danh) bị xóa theo.
+- Quản trị viên đọc được hồ sơ, điểm và lộ trình của toàn trường (không đọc được Góc Ẩn Danh), gán lớp cho giáo viên, nâng hoặc gỡ quyền giáo viên, đặt lại mật khẩu học sinh và giáo viên, và đổi mã kích hoạt. Không ai đổi được vai trò của một quản trị viên qua app; việc đó chỉ làm bằng SQL.
 
 Những điều cần biết:
 
 - Ai có mã giáo viên cũng có thể thêm bất kỳ lớp nào, nên hãy giữ mã cẩn thận và đổi mã khi bị lộ.
+- Ai có mã quản trị sẽ xem được dữ liệu của cả trường. Chỉ đặt mã quản trị khi cần, và đổi ngay khi bị lộ.
 - Giáo viên đặt lại mật khẩu thì về kỹ thuật có thể đăng nhập vào tài khoản học sinh đó.
 - Người quản trị project Supabase đọc được mọi dữ liệu, kể cả Góc Ẩn Danh.
 - Đây là dữ liệu sức khỏe tâm lý của trẻ vị thành niên. Hãy xin đồng ý của nhà trường và phụ huynh trước khi dùng thật.
