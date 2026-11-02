@@ -79,6 +79,20 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"messages": {
+                  Row: {
+                    "body": string,"created_at": string,"id": string,"sender_id": string,"student_id": string,"teacher_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "body": string,"created_at"?: string,"id"?: string,"sender_id": string,"student_id": string,"teacher_id": string
+                  }
+                  Update: {
+                    "body"?: string,"created_at"?: string,"id"?: string,"sender_id"?: string,"student_id"?: string,"teacher_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"posts": {
                   Row: {
                     "body": string,"id": string,"posted_on": string,"user_id": string
@@ -199,11 +213,19 @@ export type Database = {
 "is_teacher":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"my_teachers":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "full_name": string,"id": string,"username": string
+            }[]
+                           },
 "set_student_approval":
 { Args: { "ok": boolean,"target": string }; Returns: undefined
                            },
 "teacher_reset_password":
 { Args: { "new_password": string,"target": string }; Returns: undefined
+                           },
+"teaches":
+{ Args: { "student": string,"teacher": string }; Returns: boolean
                            },
 "viewable_students":
 { Args: Record<PropertyKey, never>; Returns: string[]
