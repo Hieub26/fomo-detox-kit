@@ -6,6 +6,7 @@ import { Sync, cacheKey, refreshIfSafe } from '../sync/sync';
 import { $ } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
 import { isConfigured, sb } from '../../lib/supabase';
+import { startChatWatch } from '../chat/view';
 
 export async function enterApp(user: { id: string }) {
   Sync.uid = user.id;
@@ -18,6 +19,7 @@ export async function enterApp(user: { id: string }) {
   else $('#module-1').innerHTML = '<p class="text-center text-slate-500 py-16"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang tải dữ liệu...</p>';
   const [changed, quizChanged, hbChanged] = await Promise.all([Sync.pull(), loadQuiz(), loadHandbook()]);
   if (!cached) bootApp(); else if (changed || quizChanged || hbChanged) refreshIfSafe();
+  startChatWatch(); // bong bóng chat + theo dõi tin đến (chỉ học sinh/giáo viên), sau khi đã có hồ sơ
 }
 export let loggingOut = false;
 export async function logout() {

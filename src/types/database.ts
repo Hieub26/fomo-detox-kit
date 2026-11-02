@@ -213,6 +213,11 @@ export type Database = {
 "is_teacher":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"my_conversations":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "last_at": string,"last_body": string,"last_sender": string,"peer_id": string,"peer_name": string,"student_id": string,"teacher_id": string
+            }[]
+                           },
 "my_teachers":
 { Args: Record<PropertyKey, never>; Returns: {
               "full_name": string,"id": string,"username": string

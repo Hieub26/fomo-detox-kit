@@ -3,8 +3,10 @@ import { registerActions } from '../../lib/actions';
 import { openModal, isModalOpen } from '../../lib/modal';
 import { sb } from '../../lib/supabase';
 import { Sync } from '../sync/sync';
+import { S } from '../../state/store';
 
 interface Message { id: string; student_id: string; teacher_id: string; sender_id: string; body: string; created_at: string }
+interface Conversation { student_id: string; teacher_id: string; peer_id: string; peer_name: string; last_body: string; last_at: string; last_sender: string }
 
 // Hội thoại tư vấn đang mở: một cặp (học sinh, giáo viên). Admin không tham gia.
 // App không dùng Realtime (để giảm dung lượng JS), nên cửa sổ đang mở tải lại tin mới mỗi vài giây.
@@ -21,6 +23,8 @@ async function fetchMessages() {
     .eq('student_id', convo.studentId).eq('teacher_id', convo.teacherId).order('created_at');
   if (!data || !convo) return;
   if (JSON.stringify(data) !== JSON.stringify(messages)) { messages = data as Message[]; renderMessages(); }
+  markConvoRead(convo.studentId, convo.teacherId); // cửa sổ đang mở: tin tới coi như đã đọc
+  refreshBadge();
 }
 function renderMessages() {
   const box = $('#chatBox');
@@ -66,6 +70,8 @@ export async function openChat(studentId: string, teacherId: string, peer: strin
   messages = [];
   openModal(chatHtml(peer));
   await fetchMessages();
+  markConvoRead(studentId, teacherId); // mở hội thoại thì coi như đã đọc tới tin mới nhất
+  refreshBadge();
   clearInterval(poll);
   poll = setInterval(fetchMessages, POLL_MS) as unknown as number;
 }
@@ -87,8 +93,108 @@ async function chatSend() {
 document.addEventListener('click', () => { if (convo && !isModalOpen()) closeChat(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && convo) setTimeout(() => { if (!isModalOpen()) closeChat(); }, 0); });
 
+// ---- Bong bóng chat nổi + theo dõi tin nhắn đến ----
+// App không dùng Realtime, nên một vòng lặp nhẹ hỏi máy chủ mỗi WATCH_MS giây để phát hiện tin mới,
+// hiện huy hiệu số hội thoại chưa đọc và báo toast khi có tin đến từ người khác.
+const WATCH_MS = 15000;
+const READ_KEY = 'fomo_chat_read';
+let conversations: Conversation[] = [];
+let watch: number | undefined;
+
+const convoKey = (studentId: string, teacherId: string) => `${studentId}:${teacherId}`;
+function readMap(): Record<string, string> {
+  try { return JSON.parse(localStorage.getItem(READ_KEY) || '{}') as Record<string, string>; } catch { return {}; }
+}
+function markConvoRead(studentId: string, teacherId: string, at?: string) {
+  const map = readMap();
+  map[convoKey(studentId, teacherId)] = at || new Date().toISOString();
+  try { localStorage.setItem(READ_KEY, JSON.stringify(map)); } catch { /* bỏ qua */ }
+}
+// Hội thoại chưa đọc: tin cuối do người khác gửi và mới hơn mốc đã đọc đã lưu.
+function isUnread(c: Conversation, map: Record<string, string>): boolean {
+  if (c.last_sender === myId()) return false;
+  const seen = map[convoKey(c.student_id, c.teacher_id)];
+  return !seen || c.last_at > seen;
+}
+function unreadCount(): number {
+  const map = readMap();
+  return conversations.filter(c => isUnread(c, map)).length;
+}
+function refreshBadge() {
+  const badge = $('#chatBadge');
+  if (!badge) return;
+  const n = unreadCount();
+  badge.textContent = n > 9 ? '9+' : String(n);
+  badge.classList.toggle('hidden', n === 0);
+}
+function mountBubble() {
+  if (document.getElementById('chatBubble')) return;
+  const b = document.createElement('button');
+  b.id = 'chatBubble';
+  b.dataset.click = 'openConvoList';
+  b.setAttribute('aria-label', 'Tin nhắn tư vấn');
+  b.className = 'fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 w-14 h-14 rounded-full bg-teal-600 hover:bg-teal-700 text-white shadow-lg flex items-center justify-center';
+  b.innerHTML = `<i class="fa-solid fa-comments text-xl"></i>
+    <span id="chatBadge" class="hidden absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-xs font-bold flex items-center justify-center"></span>`;
+  document.getElementById('appShell')?.appendChild(b);
+}
+async function pollConversations() {
+  const { data } = await sb.rpc('my_conversations');
+  if (!data) return;
+  const prev = conversations;
+  const map = readMap();
+  conversations = data as Conversation[];
+  // Báo toast cho tin đến mới (người khác gửi, mới hơn lần thấy trước và mốc đã đọc), trừ hội thoại đang mở.
+  for (const c of conversations) {
+    if (!isUnread(c, map)) continue;
+    const open = convo && convo.studentId === c.student_id && convo.teacherId === c.teacher_id;
+    if (open) continue;
+    const before = prev.find(p => p.student_id === c.student_id && p.teacher_id === c.teacher_id);
+    if (!before || c.last_at > before.last_at) toast(`Tin nhắn mới từ ${c.peer_name}`);
+  }
+  refreshBadge();
+}
+export function startChatWatch() {
+  const role = S.profile?.role;
+  if (role !== 'student' && role !== 'teacher') return; // admin không tham gia hội thoại
+  mountBubble();
+  clearInterval(watch);
+  pollConversations();
+  watch = setInterval(pollConversations, WATCH_MS) as unknown as number;
+}
+export function stopChatWatch() {
+  clearInterval(watch); watch = undefined;
+  document.getElementById('chatBubble')?.remove();
+}
+// Danh sách hội thoại: tên người, tin cuối, chấm chưa đọc. Học sinh có thêm lối nhắn giáo viên mới.
+function openConvoList() {
+  const map = readMap();
+  const role = S.profile?.role;
+  const rows = conversations.length
+    ? conversations.map(c => {
+      const unread = isUnread(c, map);
+      return `<button data-click="openConvo" data-arg="${esc(convoKey(c.student_id, c.teacher_id))}" class="w-full text-left px-4 py-3 border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-3">
+        <span class="w-10 h-10 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-user"></i></span>
+        <span class="flex-1 min-w-0">
+          <span class="flex items-center gap-2"><span class="font-semibold text-slate-800 truncate">${esc(c.peer_name)}</span>${unread ? '<span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>' : ''}</span>
+          <span class="block text-xs text-slate-500 truncate">${c.last_sender === myId() ? 'Bạn: ' : ''}${esc(c.last_body)}</span>
+        </span>
+        <span class="text-[10px] text-slate-400 shrink-0">${fmtDate(c.last_at)}</span></button>`;
+    }).join('')
+    : '<p class="text-sm text-slate-400 text-center py-8">Chưa có hội thoại nào.</p>';
+  openModal(`<h3 class="font-bold text-lg text-slate-800 mb-3 pr-8"><i class="fa-solid fa-comments text-teal-600 mr-1"></i> Tin nhắn tư vấn</h3>
+    <div class="space-y-2">${rows}</div>
+    ${role === 'student' ? '<button data-click="studentStartChat" class="mt-3 w-full px-4 py-3 border border-dashed border-teal-400 rounded-xl text-teal-700 font-semibold hover:bg-teal-50"><i class="fa-solid fa-plus mr-1"></i> Nhắn giáo viên mới</button>' : ''}`);
+}
+function openConvoFromList(key: string) {
+  const c = conversations.find(x => convoKey(x.student_id, x.teacher_id) === key);
+  if (c) openChat(c.student_id, c.teacher_id, c.peer_name);
+}
+
 registerActions({
   chatSend: () => chatSend(),
   studentStartChat: () => studentStartChat(),
   chatWithTeacher: ({ arg }) => { const t = teacherList.find(x => x.id === arg); if (t) openChat(myId()!, t.id, t.full_name || t.username); },
+  openConvoList: () => openConvoList(),
+  openConvo: ({ arg }) => openConvoFromList(arg),
 });
