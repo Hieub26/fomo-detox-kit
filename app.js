@@ -197,7 +197,7 @@ const TABS = [
   [1, 'fa-book-open', '1. Cẩm Nang Số', 'Cẩm nang'], [2, 'fa-clipboard-question', '2. Trắc Nghiệm FOMO', 'Trắc nghiệm'], [3, 'fa-calendar-check', '3. Lộ Trình Detox', 'Lộ trình'],
   [4, 'fa-headphones', '4. Âm Thanh Sóng Não', 'Âm thanh'], [5, 'fa-chart-line', '5. Góc Chia Sẻ & Badge', 'Chia sẻ']
 ];
-let tab = 1, postFor = null, planPick = null;
+let tab = 1, postFor = null, planPick = null, retake = false;
 function switchTab(n) {
   if (location.hash === '#' + n) show(n); else location.hash = '#' + n;
 }
@@ -260,8 +260,25 @@ function toggleAccordion(i) {
 }
 
 /* ======================= MODULE 2: TRẮC NGHIỆM ======================= */
+function startRetake() {
+  if (!confirm('Làm lại trắc nghiệm sẽ thêm một kết quả mới vào lịch sử (kết quả cũ vẫn được giữ). Tiếp tục?')) return;
+  retake = true; render2(); window.scrollTo(0, 0);
+}
 function render2() {
   const post = postFor && S.programs.find(p => p.id === postFor);
+  const last = lastAssess();
+  if (last && !post && !retake) {
+    $('#module-2').innerHTML = `<div class="${card} sm:p-8"><div class="max-w-3xl mx-auto">
+      <div class="text-center mb-6"><span class="bg-teal-100 text-teal-800 text-xs font-semibold px-3 py-1 rounded-full uppercase">Thang Đo Chuẩn Hóa FOMO-S &amp; PSQI</span>
+        <h2 class="text-2xl font-bold text-slate-800 mt-2">Kết Quả Trắc Nghiệm Gần Nhất</h2>
+        <p class="text-slate-500 text-sm mt-1">Bạn đã hoàn thành trắc nghiệm. Bạn chỉ nên làm lại sau khi thực hiện lộ trình hoặc sau vài ngày để thấy chuyển biến.</p></div>
+      <div id="resultBox" class="p-6 rounded-2xl border"></div>
+      <div class="text-center mt-6"><button onclick="startRetake()" class="px-6 py-2.5 border-2 border-teal-600 text-teal-700 font-semibold text-sm rounded-xl hover:bg-teal-50"><i class="fa-solid fa-rotate-right mr-1"></i> Làm lại trắc nghiệm</button></div>
+    </div></div>`;
+    const box = $('#resultBox'); box.className = `p-6 rounded-2xl border ${COLOR[LEVELS[levelIdx(last.score)].color].box}`;
+    showResult(box, last);
+    return;
+  }
   $('#module-2').innerHTML = `<div class="${card} sm:p-8"><div class="max-w-3xl mx-auto">
     <div class="text-center mb-8">
       <span class="bg-teal-100 text-teal-800 text-xs font-semibold px-3 py-1 rounded-full uppercase">Thang Đo Chuẩn Hóa FOMO-S &amp; PSQI</span>
@@ -293,14 +310,20 @@ function calculateScore() {
   S.assessments.push(a);
   if (post) { post.postId = a.id; post.status = 'done'; postFor = null; }
   save();
+  retake = false;
+  const box = $('#resultBox');
+  showResult(box, a);
+  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function showResult(box, a) {
   const li = levelIdx(a.score), L = LEVELS[li], C = COLOR[L.color];
-  const pre = post && assessById(post.preId);
+  const prog = a.programId && S.programs.find(p => p.id === a.programId);
+  const pre = prog && assessById(prog.preId);
   let actions = '';
   if (li === 2) actions = `<button onclick="startPlan(21)" class="px-4 py-2 ${C.btn} text-white text-xs font-semibold rounded-lg">Bắt Đầu Lộ Trình Detox 21 Ngày</button>
     <button onclick="alert('Hãy liên hệ Phòng Tư Vấn Tâm Lý Học Đường THCS Nguyễn Tất Thành hoặc Giáo Viên Chủ Nhiệm để được đồng hành hỗ trợ!')" class="px-4 py-2 bg-slate-800 text-white text-xs font-semibold rounded-lg hover:bg-slate-900">Liên Hệ Tư Vấn Tâm Lý</button>`;
   else actions = `<button onclick="startPlan(${L.days})" class="px-4 py-2 ${C.btn} text-white text-xs font-semibold rounded-lg">${li === 0 ? 'Duy trì' : 'Kích Hoạt'} Lộ Trình Detox ${L.days} Ngày</button>`;
   actions += `<button onclick="switchTab(5)" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50">Xem tiến độ</button>`;
-  const box = $('#resultBox');
   box.className = `mt-8 p-6 rounded-2xl border ${C.box} animate-fade-in`;
   box.innerHTML = `<div class="flex items-start gap-4">
     <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white shrink-0 shadow-md ${C.icon}"><i class="fa-solid ${L.icon}"></i></div>
@@ -308,11 +331,11 @@ function calculateScore() {
       <div class="flex items-center justify-between flex-wrap gap-2"><h3 class="text-xl font-bold ${C.title}">${L.title}</h3><span class="px-3 py-1 rounded-full text-xs font-bold text-white ${C.badge}">Điểm: ${a.score}/${MAXSCORE}</span></div>
       <p class="text-sm mt-2 leading-relaxed text-slate-700">${L.desc}</p>
       ${pre ? `<div class="mt-4 p-3 bg-white/70 rounded-xl border border-slate-200"><h4 class="font-bold text-sm mb-1">So sánh với trước lộ trình</h4>${compareHtml(pre, a)}</div>` : ''}
-      <p class="text-xs text-slate-500 mt-3"><i class="fa-solid fa-floppy-disk mr-1"></i> Kết quả đã được lưu vào lịch sử trên thiết bị này.</p>
+      <p class="text-xs text-slate-500 mt-3"><i class="fa-solid fa-floppy-disk mr-1"></i> Kết quả ngày ${fmtDate(a.date)} đã được lưu trong lịch sử trên thiết bị này.</p>
       <div class="mt-4 pt-4 border-t border-slate-200/60 flex flex-wrap gap-3">${actions}</div>
     </div></div>`;
-  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
+
 
 /* ======================= MODULE 3: LỘ TRÌNH ======================= */
 function startPlan(days) {
