@@ -51,6 +51,34 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"handbook_cards": {
+                  Row: {
+                    "body": string,"callout": string,"pos": number,"title": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "body": string,"callout": string,"pos": number,"title": string
+                  }
+                  Update: {
+                    "body"?: string,"callout"?: string,"pos"?: number,"title"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"handbook_situations": {
+                  Row: {
+                    "pos": number,"reaction": string,"solution": string,"title": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "pos": number,"reaction": string,"solution": string,"title": string
+                  }
+                  Update: {
+                    "pos"?: number,"reaction"?: string,"solution"?: string,"title"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"posts": {
                   Row: {
                     "body": string,"id": string,"posted_on": string,"user_id": string
@@ -141,6 +169,9 @@ export type Database = {
                            },
 "admin_rotate_teacher_code":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"admin_save_handbook":
+{ Args: { "cards": Json,"situations": Json }; Returns: undefined
                            },
 "admin_save_quiz":
 { Args: { "items": Json }; Returns: undefined
