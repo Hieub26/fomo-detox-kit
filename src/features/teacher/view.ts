@@ -16,19 +16,19 @@ const T = {
 };
 
 export async function loadTeacherData() {
-  const { data: cls, error: e1 } = await sb.from('teacher_classes').select('class_name').eq('teacher_id', Sync.uid).order('class_name');
+  const { data: cls, error: e1 } = await sb.from('teacher_classes').select('class_name').eq('teacher_id', Sync.uid!).order('class_name');
   if (e1) throw e1;
   T.classes = cls.map(c => c.class_name);
-  const profiles = await fetchAllRows(sb.from('profiles').select('id,username,full_name,class_name').eq('role', 'student').order('class_name').order('full_name'));
+  const profiles = await fetchAllRows((from, to) => sb.from('profiles').select('id,username,full_name,class_name').eq('role', 'student').order('class_name').order('full_name').range(from, to));
   T.students = profiles;
   const ids = new Set(profiles.map(p => p.id));
-  const group = <X>(rows: any[], convert: (r: any) => X) => {
+  const group = <R extends { user_id: string }, X>(rows: R[], convert: (r: R) => X) => {
     const out: Record<string, X[]> = {};
     rows.forEach(r => { if (ids.has(r.user_id)) (out[r.user_id] = out[r.user_id] || []).push(convert(r)); });
     return out;
   };
-  T.assess = group(await fetchAllRows(sb.from('assessments').select('*').order('user_id').order('id')), TABLES.assessments.fromRow);
-  T.programs = group(await fetchAllRows(sb.from('programs').select('*').order('user_id').order('id')), TABLES.programs.fromRow);
+  T.assess = group(await fetchAllRows((from, to) => sb.from('assessments').select('*').order('user_id').order('id').range(from, to)), TABLES.assessments.fromRow);
+  T.programs = group(await fetchAllRows((from, to) => sb.from('programs').select('*').order('user_id').order('id').range(from, to)), TABLES.programs.fromRow);
   Object.values(T.assess).forEach(l => l.sort(byDate));
 }
 
@@ -134,13 +134,13 @@ export async function addClass(e: Event) {
   e.preventDefault();
   const name = $('#newClass').value.trim();
   if (!name) return;
-  const { error } = await sb.from('teacher_classes').insert({ teacher_id: Sync.uid, class_name: name });
+  const { error } = await sb.from('teacher_classes').insert({ teacher_id: Sync.uid!, class_name: name });
   if (error && error.code !== '23505') { console.error(error); toast('Không thêm được lớp. Hãy thử lại.'); return; }
   render7();
 }
 export async function removeClass(name: string) {
   if (!confirm(`Bỏ lớp ${name} khỏi danh sách của bạn? Dữ liệu học sinh không bị xóa.`)) return;
-  const { error } = await sb.from('teacher_classes').delete().eq('teacher_id', Sync.uid).eq('class_name', name);
+  const { error } = await sb.from('teacher_classes').delete().eq('teacher_id', Sync.uid!).eq('class_name', name);
   if (error) { console.error(error); toast('Không bỏ được lớp. Hãy thử lại.'); return; }
   if (T.filter === name) T.filter = '';
   T.selected = null;

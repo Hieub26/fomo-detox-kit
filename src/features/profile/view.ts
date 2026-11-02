@@ -55,7 +55,7 @@ export async function saveProfile() {
   const name = $('#pname').value.trim(), clsEl = $('#pcls');
   const patch: { full_name: string; class_name?: string } = { full_name: name };
   if (clsEl) patch.class_name = clsEl.value;
-  const { error } = await sb.from('profiles').update(patch).eq('id', Sync.uid);
+  const { error } = await sb.from('profiles').update(patch).eq('id', Sync.uid!);
   if (error) { console.error(error); toast('Không lưu được hồ sơ. Hãy kiểm tra mạng rồi thử lại.'); return; }
   await Sync.pull(); // lấy lại tên lớp đã chuẩn hóa từ máy chủ
   render6(); toast('Đã lưu hồ sơ.');
