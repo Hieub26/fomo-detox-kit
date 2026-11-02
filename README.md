@@ -66,7 +66,8 @@ Không đổi `VITE_USERNAME_EMAIL_DOMAIN` sau khi đã có tài khoản, vì m�
 ## Trước khi dùng thật
 
 - Điền thông tin thật của phòng tư vấn tâm lý (phòng, giờ, người phụ trách) vào `SUPPORT` trong `src/features/quiz/content.ts`. Thông tin này hiện cho học sinh có kết quả mức Cao.
-- Điểm trắc nghiệm: câu 10 ("muốn thay đổi thói quen") được tính ngược (5 trừ đáp án), tổng vẫn 10–40 với ngưỡng 18/28. Migration `20261102020000_review_fixes.sql` tính lại điểm đã lưu theo cách này. Từ `20261102030000_server_score.sql`, database tự tính điểm từ đáp án khi lưu và bỏ qua điểm do app gửi lên.
+- Điểm trắc nghiệm: câu 10 ("muốn thay đổi thói quen") mặc định tính ngược (đáp án 1–4 được 4–1 điểm), tổng vẫn 10–40 với ngưỡng 18/28. Migration `20261102020000_review_fixes.sql` tính lại điểm đã lưu theo cách này. Từ `20261102030000_server_score.sql`, database tự tính điểm từ đáp án khi lưu và bỏ qua điểm do app gửi lên.
+- Quản trị viên sửa nội dung câu hỏi, đáp án và điểm từng đáp án (1–4) trên trang Quản Trị; bộ câu hỏi nằm trong bảng `quiz_questions`. Đổi điểm sẽ tính lại mọi bài đã làm. Vẫn cố định 10 câu, mỗi câu 4 đáp án, và các nhóm câu trong `GROUPS`. Đổi nội dung câu hỏi giữa đợt khảo sát làm dữ liệu trước và sau không còn đo cùng một câu.
 - 10 câu hỏi do nhóm tự xây dựng, tham khảo FOMO-S và PSQI; đây không phải thang đo chuẩn hóa nguyên bản.
 
 ## Quyền truy cập

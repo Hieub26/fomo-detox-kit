@@ -1,4 +1,6 @@
+import type { QuizItem } from '../quiz/content';
 import { sb } from '../../lib/supabase';
+import type { Json } from '../../types/database';
 
 // Mọi kiểm tra quyền nằm trong các hàm SQL (security definer). Ở đây chỉ gọi RPC và báo lỗi.
 async function rpcOrThrow<T>(call: PromiseLike<{ data: T | null; error: unknown }>): Promise<T | null> {
@@ -19,5 +21,6 @@ export const adminSetRole = (targetId: string, role: 'student' | 'teacher') =>
 export const setStudentApproval = (targetId: string, ok: boolean) =>
   rpcOrThrow(sb.rpc('set_student_approval', { target: targetId, ok }));
 export const adminDeleteUser = (targetId: string) => rpcOrThrow(sb.rpc('admin_delete_user', { target: targetId }));
-export const rotateTeacherCode = () => rpcOrThrow(sb.rpc('admin_rotate_teacher_code'));
+export const adminSaveQuiz = (items: QuizItem[]) => rpcOrThrow(sb.rpc('admin_save_quiz', { items: items as unknown as Json }));
+export const rotateTeacherCode =() => rpcOrThrow(sb.rpc('admin_rotate_teacher_code'));
 export const rotateAdminCode = () => rpcOrThrow(sb.rpc('admin_rotate_admin_code'));

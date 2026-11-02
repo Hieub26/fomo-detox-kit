@@ -1,8 +1,9 @@
 import type { Assessment, Program, UserRole } from '../../types';
-import { adminDeleteUser, adminResetPassword, adminSetRole, rotateAdminCode, rotateTeacherCode, setStudentApproval } from './api';
+import { adminDeleteUser, adminResetPassword, adminSaveQuiz, adminSetRole, rotateAdminCode, rotateTeacherCode, setStudentApproval } from './api';
 import { checkedCount, pct } from '../program/progress';
 import { compareHtml, lineChart } from '../progress/charts';
-import { GROUPS, LEVELS, MAXSCORE } from '../quiz/content';
+import { QUIZ, setQuiz } from '../quiz/config';
+import { GROUPS, LEVELS, MAXSCORE, type QuizItem } from '../quiz/content';
 import { byDate, groupScore, levelIdx, lvBadge } from '../quiz/scoring';
 import { tab } from '../shell/navigation';
 import { TABLES, fetchAllRows } from '../sync/sync';
@@ -22,6 +23,7 @@ const A = {
   q: '', cls: '', role: '' as UserRole | 'pending' | '', selected: null as string | null,
   tempPass: null as { id: string; value: string } | null,
   codes: {} as { teacher?: string; admin?: string },
+  quizDraft: null as QuizItem[] | null, quizOpen: false, // giữ phần đang sửa khi trang quản trị vẽ lại
   error: ''
 };
 
@@ -50,6 +52,7 @@ export async function loadAdminData() {
 }
 
 export function renderAdmin() {
+  keepQuizDraft();
   const box = $('#module-8');
   box.innerHTML = '<p class="text-center text-slate-500 py-16"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang tải dữ liệu toàn trường...</p>';
   loadAdminData().then(() => { A.error = ''; drawAdmin(); }).catch(e => {
@@ -67,6 +70,7 @@ const smallBtn = 'px-2.5 py-1 border border-slate-200 rounded-lg text-xs hover:b
 
 export function drawAdmin() {
   if (tab !== 8) return;
+  keepQuizDraft();
   const students = enrolled(), teachers = byRole('teacher'), pending = A.accounts.filter(isPending).length;
   const done = students.filter(s => (A.assess[s.id] || []).length);
   const high = done.filter(s => levelIdx(latest(A.assess[s.id])!.score) === 2).length;
@@ -109,6 +113,7 @@ export function drawAdmin() {
       </div>
       <div id="adminUsers">${usersHtml()}</div>
     </div>
+    ${quizCard()}
     ${codesCard()}`;
 }
 
@@ -221,6 +226,54 @@ function studentDetail() {
     ${progs}</div>`;
 }
 
+function quizCard() {
+  const items = A.quizDraft || QUIZ;
+  const cls = 'border border-slate-200 rounded-lg px-2 py-1.5 text-sm';
+  return `<div class="${card}"><details id="quizEditor" ${A.quizOpen ? 'open' : ''}>
+    <summary class="font-bold text-lg text-slate-800 cursor-pointer"><i class="fa-solid fa-pen-to-square text-teal-600 mr-1"></i> Sửa Câu Hỏi Trắc Nghiệm</summary>
+    <p class="text-xs text-slate-500 mt-1 mb-4">Mỗi đáp án được 1–4 điểm, điểm càng cao nghĩa là nguy cơ càng cao. Tổng luôn trong 10–${MAXSCORE} nên các mức Nhẹ, Trung bình, Cao giữ nguyên ngưỡng.</p>
+    <div class="space-y-4">${items.map((q, i) => `<div data-quiz-item class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+      <label class="block text-sm font-semibold text-slate-800 mb-2">Câu ${i + 1}
+        <textarea data-q rows="2" maxlength="300" class="mt-1 w-full font-normal ${cls}">${esc(q.question)}</textarea></label>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">${q.labels.map((l, k) => `<div class="flex gap-2">
+        <input data-label maxlength="60" value="${esc(l)}" aria-label="Câu ${i + 1}, nội dung đáp án ${k + 1}" class="flex-1 min-w-0 ${cls}">
+        <select data-points aria-label="Câu ${i + 1}, điểm đáp án ${k + 1}" class="${cls}">${[1, 2, 3, 4].map(p => `<option value="${p}" ${q.points[k] === p ? 'selected' : ''}>${p} điểm</option>`).join('')}</select></div>`).join('')}</div>
+    </div>`).join('')}</div>
+    <button data-click="adminSaveQuiz" class="${bt} bg-teal-600 hover:bg-teal-700 mt-4"><i class="fa-solid fa-floppy-disk mr-1"></i> Lưu câu hỏi</button>
+  </details></div>`;
+}
+function readQuizForm(): QuizItem[] {
+  return [...document.querySelectorAll<HTMLElement>('[data-quiz-item]')].map(box => ({
+    question: box.querySelector<HTMLTextAreaElement>('[data-q]')!.value.trim(),
+    labels: [...box.querySelectorAll<HTMLInputElement>('[data-label]')].map(el => el.value.trim()),
+    points: [...box.querySelectorAll<HTMLSelectElement>('[data-points]')].map(el => +el.value)
+  }));
+}
+// Gọi trước khi vẽ lại: chỉ giữ bản nháp nếu thật sự khác câu hỏi đang dùng.
+function keepQuizDraft() {
+  const form = document.querySelector<HTMLDetailsElement>('#quizEditor');
+  if (!form) return;
+  A.quizOpen = form.open;
+  const draft = readQuizForm();
+  A.quizDraft = JSON.stringify(draft) === JSON.stringify(QUIZ) ? null : draft;
+}
+async function saveQuiz() {
+  const items = readQuizForm();
+  const empty = items.findIndex(q => !q.question || q.labels.some(l => !l));
+  if (empty >= 0) { toast(`Câu ${empty + 1} còn thiếu nội dung câu hỏi hoặc đáp án.`); return; }
+  if (JSON.stringify(items) === JSON.stringify(QUIZ)) { toast('Chưa có thay đổi nào.'); return; }
+  const rescored = items.some((q, i) => q.points.join() !== QUIZ[i].points.join());
+  if (!confirm(rescored
+    ? 'Điểm đáp án thay đổi nên điểm mọi bài đã làm sẽ được tính lại, và mức của học sinh có thể đổi. Tiếp tục?'
+    : 'Lưu nội dung mới? Học sinh sẽ thấy ngay từ lần mở app tiếp theo. Các bài đã làm vẫn giữ đáp án đã chọn.')) return;
+  try { await adminSaveQuiz(items); } catch (e) { failed(e, 'Không lưu được câu hỏi.'); return; }
+  setQuiz(items);
+  A.quizDraft = null;
+  toast('Đã lưu câu hỏi.');
+  $('#module-8').innerHTML = ''; // bỏ form cũ để renderAdmin không coi đó là bản nháp
+  renderAdmin();
+}
+
 function codesCard() {
   const shown = (code: string | undefined, who: string) => (code
     ? `<div class="mt-2 text-sm rounded-xl px-3 py-2 bg-amber-50 text-amber-900 border border-amber-200">Mã mới: <code class="font-bold select-all">${esc(code)}</code>. Chỉ đưa cho ${who}. Mã chỉ hiện một lần; mã cũ đã hết hiệu lực.</div>`
@@ -327,7 +380,7 @@ export function exportResearch() {
     });
   });
   if (!rows.length) { toast('Chưa có lần làm trắc nghiệm nào để xuất.'); return; }
-  const note = [['# Ghi chú: c1-c10 là đáp án gốc 1-4. Tổng điểm tính câu 10 ngược (5 - c10). Nhóm: ' + GROUPS.map((g, i) => `nhom_${i + 1}=${g.name} (câu ${g.items.join(',')})`).join('; ')]];
+  const note = [['# Ghi chú: c1-c10 là thứ tự đáp án đã chọn (1-4). Điểm từng đáp án theo bảng hiện tại: ' + QUIZ.map((q, i) => `c${i + 1}=${q.points.join('/')}`).join(' ') + '. Nhóm: ' + GROUPS.map((g, i) => `nhom_${i + 1}=${g.name} (câu ${g.items.join(',')})`).join('; ')]];
   download(`fomo-du-lieu-nghien-cuu-${new Date().toISOString().slice(0, 10)}.csv`, toCsv([head, ...rows, [], ...note]), 'text/csv');
   toast(`Đã xuất ${rows.length} lần làm trắc nghiệm của ${new Set(rows.map(r => r[0])).size} học sinh.`);
 }
@@ -355,6 +408,7 @@ registerActions({
   adminDemote: ({ arg }) => setRole(arg, 'student'),
   adminAddClass: ({ el, arg }) => addClass(el, arg),
   adminRemoveClass: ({ el, arg }) => removeClass(arg, el.dataset.cls ?? ''),
+  adminSaveQuiz: () => saveQuiz(),
   adminRotateTeacherCode: () => rotate('teacher'),
   adminRotateAdminCode: () => rotate('admin'),
   adminExportCsv: () => exportCsv(),

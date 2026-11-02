@@ -63,6 +63,7 @@
 .fa-music::before { content: "\f001"; }
 .fa-paper-plane::before { content: "\f1d8"; }
 .fa-pause::before { content: "\f04c"; }
+.fa-pen-to-square::before { content: "\f044"; }
 .fa-play::before { content: "\f04b"; }
 .fa-right-from-bracket::before { content: "\f2f5"; }
 .fa-rotate-right::before { content: "\f2f9"; }
