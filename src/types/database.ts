@@ -127,7 +127,10 @@ export type Database = {
             [_ in never]: never
           }
           Functions: {
-            "admin_delete_user":
+            "admin_delete_post":
+{ Args: { "post_id": string }; Returns: undefined
+                           },
+"admin_delete_user":
 { Args: { "target": string }; Returns: undefined
                            },
 "admin_reset_password":
@@ -153,6 +156,11 @@ export type Database = {
                            },
 "claim_teacher":
 { Args: { "code": string }; Returns: boolean
+                           },
+"community_posts":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "body": string,"id": string,"posted_on": string
+            }[]
                            },
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean

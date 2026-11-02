@@ -6,7 +6,39 @@ import { supportBox } from '../quiz/view';
 import { refresh } from '../shell/navigation';
 import { $, card, esc, fmtDate, toast, today, uid } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
+import { sb } from '../../lib/supabase';
 import { S, save } from '../../state/store';
+
+// Bảng ẩn danh chung: bài của mọi học sinh, không kèm tên người viết (xem community_posts()).
+let feed: { id: string; date: string; text: string }[] = [];
+// Tải bài của cả trường rồi vẽ lại danh sách. Bài của chính mình luôn hiện nhờ merge trong feedHtml,
+// kể cả khi chưa kịp đồng bộ lên máy chủ.
+async function loadFeed() {
+  const { data, error } = await sb.rpc('community_posts');
+  if (error || !data) return;
+  feed = data.map(r => ({ id: r.id, date: r.posted_on, text: r.body }));
+  const el = $('#confessionFeed');
+  if (el) el.innerHTML = feedHtml();
+}
+function feedHtml() {
+  const own = new Set(S.posts.map(p => p.id)), admin = S.profile.role === 'admin';
+  const serverIds = new Set(feed.map(f => f.id));
+  const extra = S.posts.filter(p => !serverIds.has(p.id)).map(p => ({ id: p.id, date: p.date, text: p.text }));
+  const all = [...extra, ...feed]; // bài của mình chưa đồng bộ lên trước, rồi tới bài máy chủ (mới nhất trước)
+  const posts = all.map(p => {
+    const mine = own.has(p.id);
+    const del = mine
+      ? `<button data-click="delPost" data-arg="${esc(p.id)}" class="ml-2 text-rose-500" aria-label="Xóa"><i class="fa-solid fa-trash-can"></i></button>`
+      : admin ? `<button data-click="adminDelPost" data-arg="${esc(p.id)}" class="ml-2 text-rose-500" aria-label="Xóa bài này" title="Xóa bài (quản trị)"><i class="fa-solid fa-trash-can"></i></button>` : '';
+    return `<div class="p-4 rounded-xl border ${mine ? 'border-teal-100 bg-teal-50/40' : 'border-slate-100 bg-slate-50/50'}"><div class="flex justify-between items-center mb-2">
+      <span class="text-xs font-bold ${mine ? 'text-teal-700' : 'text-slate-600'}"><i class="fa-solid fa-user-ninja mr-1"></i> ${mine ? 'Bạn • Ẩn danh' : 'Ẩn danh'}</span>
+      <span class="text-[11px] text-slate-400">${fmtDate(p.date)} ${del}</span></div>
+      <p class="text-sm text-slate-700" style="white-space:pre-wrap">${esc(p.text)}</p></div>`;
+  }).join('');
+  return posts + SAMPLE_POSTS.map(p => `<div class="p-4 rounded-xl border border-slate-100 bg-slate-50/50"><div class="flex justify-between items-center mb-2">
+      <span class="text-xs font-bold ${p.col}"><i class="fa-solid fa-user-ninja mr-1"></i> ${p.who}</span><span class="text-[11px] text-slate-400">${p.when}</span></div>
+      <p class="text-sm text-slate-700">${p.text}</p></div>`).join('');
+}
 
 export const SAMPLE_POSTS = [
   { who: 'Học sinh Khối 8 • Ẩn danh', col: 'text-indigo-600', when: 'Bài mẫu', text: '"Mấy hôm nay tắt thông báo sau 21h30 và nghe tiếng mưa rơi ở Module 4 thấy ngủ ngon hẳn. Sáng ra đi học không còn bị đau đầu ngủ gật nữa!"' },
@@ -78,21 +110,15 @@ export function render5() {
   ${progressCard()}
   <div class="${card}">
     <h3 class="font-bold text-xl text-slate-800 mb-1">Góc Chia Sẻ Ẩn Danh (Confession)</h3>
-    <p class="text-xs text-slate-500 mb-6">Nơi học sinh THCS Nguyễn Tất Thành trải lòng về áp lực FOMO &amp; lan tỏa động lực Detox. Chỉ bạn đọc được bài của mình: bài lưu trong tài khoản của bạn, giáo viên và quản trị viên không xem được trong app.</p>
+    <p class="text-xs text-slate-500 mb-6">Nơi học sinh THCS Nguyễn Tất Thành trải lòng về áp lực FOMO &amp; lan tỏa động lực Detox. Mọi người đọc được bài của nhau nhưng không ai thấy tên người viết. Bài vi phạm sẽ bị quản trị viên gỡ.</p>
     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
       <textarea id="confessionInput" rows="3" maxlength="1500" class="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Viết chia sẻ hoặc trải nghiệm của bạn tại đây... (Hệ thống tự động ẩn danh)"></textarea>
       <div class="flex justify-between items-center mt-3"><span class="text-xs text-slate-400"><i class="fa-solid fa-user-secret mr-1"></i> Không hiển thị tên của bạn</span>
         <button data-click="postConfession" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-lg shadow-sm transition"><i class="fa-solid fa-paper-plane mr-1"></i> Gửi Chia Sẻ</button></div></div>
     ${showSupport ? `<div class="mb-6"><p class="text-sm text-slate-700">Cảm ơn bạn đã chia sẻ. Bạn không phải một mình đối mặt với chuyện này.</p>${supportBox()}</div>` : ''}
-    <div class="space-y-4">${S.posts.slice().reverse().map(p => `
-      <div class="p-4 rounded-xl border border-teal-100 bg-teal-50/40"><div class="flex justify-between items-center mb-2">
-        <span class="text-xs font-bold text-teal-700"><i class="fa-solid fa-user-ninja mr-1"></i> Bạn • Ẩn danh</span>
-        <span class="text-[11px] text-slate-400">${fmtDate(p.date)} <button data-click="delPost" data-arg="${esc(p.id)}" class="ml-2 text-rose-500" aria-label="Xóa"><i class="fa-solid fa-trash-can"></i></button></span></div>
-        <p class="text-sm text-slate-700" style="white-space:pre-wrap">${esc(p.text)}</p></div>`).join('')}
-      ${SAMPLE_POSTS.map(p => `<div class="p-4 rounded-xl border border-slate-100 bg-slate-50/50"><div class="flex justify-between items-center mb-2">
-        <span class="text-xs font-bold ${p.col}"><i class="fa-solid fa-user-ninja mr-1"></i> ${p.who}</span><span class="text-[11px] text-slate-400">${p.when}</span></div>
-        <p class="text-sm text-slate-700">${p.text}</p></div>`).join('')}</div>
+    <div id="confessionFeed" class="space-y-4">${feedHtml()}</div>
   </div>`;
+  loadFeed();
 }
 export function postConfession() {
   const input = $('#confessionInput'), text = input.value.trim();
@@ -103,10 +129,22 @@ export function postConfession() {
 }
 export function delPost(id: string) {
   if (!confirm('Xóa chia sẻ này?')) return;
-  S.posts = S.posts.filter(p => p.id !== id); save(); refresh();
+  S.posts = S.posts.filter(p => p.id !== id);
+  feed = feed.filter(p => p.id !== id);
+  save(); refresh();
+}
+// Quản trị viên gỡ bài của bất kỳ ai. Hàm admin_delete_post kiểm tra quyền phía máy chủ.
+export async function adminDelPost(id: string) {
+  if (!confirm('Gỡ bài này khỏi Góc Chia Sẻ? Không khôi phục được.')) return;
+  const { error } = await sb.rpc('admin_delete_post', { post_id: id });
+  if (error) { toast('Không gỡ được bài. Hãy thử lại.'); return; }
+  feed = feed.filter(p => p.id !== id);
+  S.posts = S.posts.filter(p => p.id !== id); // phòng khi quản trị viên gỡ chính bài của mình
+  save(); refresh(); toast('Đã gỡ bài.');
 }
 
 registerActions({
   delPost: ({ arg }) => delPost(arg),
+  adminDelPost: ({ arg }) => adminDelPost(arg),
   postConfession: () => postConfession(),
 });
