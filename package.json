@@ -3,8 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "dev": "npm run -s icons && vite",
+    "icons": "node scripts/build-icons.mjs",
+    "build": "npm run -s icons && tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 8000 --strictPort",
     "db:start": "supabase start -x studio,imgproxy,storage-api,edge-runtime,realtime,logflare,vector,mailpit,postgres-meta,supavisor",
     "db:stop": "supabase stop",
@@ -12,7 +13,9 @@
     "db:types": "supabase gen types typescript --local > src/types/database.ts"
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-free": "6.4.0",
     "@supabase/supabase-js": "^2.118.0",
+    "subset-font": "^2.9.0",
     "supabase": "^2.122.0",
     "tailwindcss": "^3.4.19",
     "typescript": "^7.0.2",

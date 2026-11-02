@@ -1,3 +1,4 @@
+import './styles/icons.css'; // đứng trước Tailwind để các lớp text-*, block... ghi đè được .fa-solid
 import './styles/globals.css';
 import { start } from './features/auth/session';
 
