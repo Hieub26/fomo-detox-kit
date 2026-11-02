@@ -10,7 +10,8 @@ export let authMode = 'login';
 export const authInput = 'w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500';
 export const authLabel = 'block text-xs font-semibold text-slate-600 mb-1';
 
-export function authError(error: any) {
+export function authError(error: unknown) {
+  const { code, name, message } = (error ?? {}) as { code?: string; name?: string; message?: string };
   const M: Record<string, string> = {
     invalid_credentials: 'Sai tên đăng nhập hoặc mật khẩu.',
     user_already_exists: 'Tên đăng nhập này đã có người dùng. Hãy chọn tên khác.',
@@ -20,8 +21,8 @@ export function authError(error: any) {
     email_address_invalid: 'Máy chủ không chấp nhận tên đăng nhập này. Hãy báo thầy cô.',
     email_not_confirmed: 'Máy chủ đang bật xác nhận email. Người quản trị cần tắt "Confirm email" trong Supabase.'
   };
-  if (M[error.code]) return M[error.code];
-  if (error.name === 'AuthRetryableFetchError' || /fetch/i.test(error.message || '')) return 'Không kết nối được máy chủ. Hãy kiểm tra mạng rồi thử lại.';
+  if (code && M[code]) return M[code];
+  if (name === 'AuthRetryableFetchError' || /fetch/i.test(message || '')) return 'Không kết nối được máy chủ. Hãy kiểm tra mạng rồi thử lại.';
   console.error(error);
   return 'Có lỗi xảy ra. Hãy thử lại sau.';
 }
