@@ -343,7 +343,9 @@ async function submitAuth(e) {
 async function enterApp(user) {
   Sync.uid = user.id;
   const cached = Sync.loadCache();
-  document.getElementById('authScreen').classList.add('hidden');
+  const authBox = document.getElementById('authScreen');
+  authBox.classList.add('hidden');
+  authBox.innerHTML = ''; // không giữ mật khẩu vừa nhập trong trang
   document.getElementById('appShell').classList.remove('hidden');
   if (cached) bootApp();
   else document.getElementById('module-1').innerHTML = '<p class="text-center text-slate-500 py-16"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang tải dữ liệu...</p>';

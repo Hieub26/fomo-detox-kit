@@ -384,7 +384,7 @@ function render3() {
         <div class="absolute -right-10 -bottom-10 opacity-10"><i class="fa-solid fa-bed text-9xl text-indigo-300"></i></div>
         <span class="bg-indigo-800/80 text-indigo-200 text-xs px-3 py-1 rounded-full border border-indigo-700">Đồng Hồ Nhắc Nhở Đêm</span>
         <h3 class="font-bold text-lg mt-3">Mốc Thời Gian Rời Màn Hình</h3>
-        <div class="my-6"><div id="countdownDisplay" class="text-4xl font-extrabold tracking-wider text-teal-300 font-mono">-- : -- : --</div>
+        <div class="my-6"><div id="countdownDisplay" class="text-3xl sm:text-4xl font-extrabold tracking-wider text-teal-300 font-mono whitespace-nowrap">-- : -- : --</div>
           <p class="text-xs text-indigo-200/70 mt-1">Khuyên dùng: Tắt thiết bị trước 21h30 mỗi tối</p></div>
         <button onclick="toggleReminder()" class="w-full py-2.5 ${S.reminder ? 'bg-rose-500 hover:bg-rose-600' : 'bg-teal-500 hover:bg-teal-600'} text-white font-semibold rounded-xl text-sm transition">
           <i class="fa-solid ${S.reminder ? 'fa-bell-slash' : 'fa-bell'} mr-1"></i> ${S.reminder ? 'Đang Bật Nhắc Nhở (Tắt)' : 'Kích Hoạt Cảnh Báo Nhắc Nhở'}</button>
