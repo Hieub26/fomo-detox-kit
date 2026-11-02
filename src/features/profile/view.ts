@@ -9,6 +9,7 @@ import { $, bt, card, download, esc, inp, toCsv, toast, today } from '../../lib/
 import { registerActions } from '../../lib/actions';
 import { sb } from '../../lib/supabase';
 import { S, blank, save, setS } from '../../state/store';
+import type { Assessment, Profile, Program } from '../../types';
 
 export function teacherPayload() {
   return { app: 'FOMO_DETOX_KIT', version: 2, exported: new Date().toISOString(), profile: S.profile, assessments: S.assessments, programs: S.programs };
@@ -89,27 +90,33 @@ export function wipe() {
 export function restore(f?: File) {
   if (!f) return;
   f.text().then(t => {
-    const d = JSON.parse(t);
+    const d = JSON.parse(t) as { assessments?: unknown } | null;
     if (!d || !Array.isArray(d.assessments)) throw new Error('bad');
     if (!confirm('Khôi phục sẽ thay thế dữ liệu hiện tại trong tài khoản. Tiếp tục?')) return;
     setS(Object.assign(blank(), { profile: S.profile, reminder: S.reminder }, sanitizeData(d)));
     save(); toast('Đã khôi phục.'); render6();
   }).catch(() => toast('File sao lưu không hợp lệ.'));
 }
+// File học sinh nộp qua "Nộp kết quả cho giáo viên".
+interface StudentExport { app: string; profile: Profile; assessments: Assessment[]; programs?: Program[] }
+const isStudentExport = (d: unknown): d is StudentExport => {
+  const x = d as Partial<StudentExport> | null;
+  return !!x && x.app === 'FOMO_DETOX_KIT' && Array.isArray(x.assessments) && !!x.profile;
+};
 export function teacherImport(files: FileList) {
-  Promise.all([...files].map(f => f.text().then(t => { try { return JSON.parse(t); } catch (e) { return null; } }))).then(all => {
-    const data = all.filter(d => d && d.app === 'FOMO_DETOX_KIT' && Array.isArray(d.assessments) && d.profile);
+  Promise.all([...files].map(f => f.text().then((t): unknown => { try { return JSON.parse(t); } catch (e) { return null; } }))).then(all => {
+    const data = all.filter(isStudentExport);
     const out = $('#tout');
     if (!data.length) { out.innerHTML = '<p class="text-sm text-rose-600">Không có file hợp lệ. Hãy chọn file JSON do học sinh xuất (Nộp kết quả cho giáo viên).</p>'; return; }
     const head = ['Mã HS', 'Tên', 'Lớp', 'Số lần KS', 'Điểm đầu', 'Điểm gần nhất', 'Thay đổi', 'Lộ trình', '% hoàn thành'];
-    const rows = data.map(d => {
+    const rows = data.map((d): (string | number)[] => {
       const as = d.assessments.slice().sort(byDate), f = as[0], l = as[as.length - 1];
       const p = (d.programs || []).slice(-1)[0];
       return [d.profile.code, d.profile.name, d.profile.cls, as.length, f ? f.score : '', l ? l.score : '', f && as.length > 1 ? l.score - f.score : '',
         p ? p.days + ' ngày' : '', p ? Math.round(Object.keys(p.checks).filter(k => p.checks[k]).length / p.days * 100) : ''];
     });
-    const v = rows.filter(r => r[6] !== '');
-    const avg = v.length ? (v.reduce((a, r) => a + r[6], 0) / v.length).toFixed(1) : 'n/a';
+    const v = rows.map(r => r[6]).filter((c): c is number => c !== '');
+    const avg = v.length ? (v.reduce((a, c) => a + c, 0) / v.length).toFixed(1) : 'n/a';
     out.innerHTML = `<p class="text-sm mb-2">${rows.length} học sinh. Thay đổi điểm trung bình (HS có từ 2 lần trắc nghiệm): <b>${avg}</b></p>
       <div class="overflow-x-auto"><table class="w-full text-sm text-left"><tr class="text-xs text-slate-500">${head.map(h => `<th class="py-1 pr-3">${h}</th>`).join('')}</tr>
       ${rows.map(r => `<tr class="border-t border-slate-100">${r.map(c => `<td class="py-1.5 pr-3">${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>
