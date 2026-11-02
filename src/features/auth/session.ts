@@ -1,4 +1,5 @@
 import { renderAuth } from './view';
+import { loadQuiz } from '../quiz/config';
 import { bootApp } from '../shell/navigation';
 import { Sync, cacheKey, refreshIfSafe } from '../sync/sync';
 import { $ } from '../../lib/dom';
@@ -14,8 +15,8 @@ export async function enterApp(user: { id: string }) {
   $('#appShell').classList.remove('hidden');
   if (cached) bootApp();
   else $('#module-1').innerHTML = '<p class="text-center text-slate-500 py-16"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang tải dữ liệu...</p>';
-  const changed = await Sync.pull();
-  if (!cached) bootApp(); else if (changed) refreshIfSafe();
+  const [changed, quizChanged] = await Promise.all([Sync.pull(), loadQuiz()]);
+  if (!cached) bootApp(); else if (changed || quizChanged) refreshIfSafe();
 }
 export let loggingOut = false;
 export async function logout() {

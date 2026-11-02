@@ -1,6 +1,7 @@
 import type { Assessment } from '../../types';
 import { compareHtml } from '../progress/charts';
-import { COLOR, LEVELS, MAXSCORE, OPTS, OPTS_WANT, Q, SCALE_LABEL, SUPPORT } from './content';
+import { QUIZ } from './config';
+import { COLOR, LEVELS, MAXSCORE, SCALE_LABEL, SUPPORT } from './content';
 import { assessById, lastAssess, levelIdx, scoreOf } from './scoring';
 import { switchTab } from '../shell/navigation';
 import { $, card, esc, fmtDate, toast, uid } from '../../lib/dom';
@@ -41,15 +42,15 @@ export function render2() {
     <div class="text-center mb-8">
       <span class="bg-teal-100 text-teal-800 text-xs font-semibold px-3 py-1 rounded-full">${SCALE_LABEL}</span>
       <h2 class="text-2xl font-bold text-slate-800 mt-2">Đánh Giá Mức Độ FOMO &amp; Giấc Ngủ Của Bạn</h2>
-      <p class="text-slate-500 text-sm mt-1">Trả lời trung thực 10 câu hỏi ngắn dưới đây để hệ thống tính điểm và gợi ý lộ trình phù hợp. Câu 10 được tính ngược: càng muốn thay đổi, điểm nguy cơ càng thấp.</p>
+      <p class="text-slate-500 text-sm mt-1">Trả lời trung thực 10 câu hỏi ngắn dưới đây để hệ thống tính điểm và gợi ý lộ trình phù hợp.</p>
       ${post ? `<p class="mt-3 text-sm bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-xl px-3 py-2"><i class="fa-solid fa-flag-checkered mr-1"></i> Đây là bài khảo sát <b>sau</b> Lộ trình ${post.days} ngày. Kết quả sẽ được so sánh với bài trước đó.</p>` : ''}
     </div>
     <form id="fomoForm" class="space-y-6" data-submit="noop">
-      ${Q.map((q, i) => `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
-        <p class="font-semibold text-slate-800 text-sm mb-3">${i + 1}. ${esc(q)}</p>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">${(i === 9 ? OPTS_WANT : OPTS).map((o, k) => `
+      ${QUIZ.map((q, i) => `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+        <p class="font-semibold text-slate-800 text-sm mb-3">${i + 1}. ${esc(q.question)}</p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">${q.labels.map((o, k) => `
           <label class="flex items-center gap-2 p-2 bg-white rounded border border-slate-200 cursor-pointer hover:bg-teal-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50">
-            <input type="radio" name="q_${i}" value="${k + 1}" class="accent-teal-600"> ${o}</label>`).join('')}</div></div>`).join('')}
+            <input type="radio" name="q_${i}" value="${k + 1}" class="accent-teal-600"> ${esc(o)}</label>`).join('')}</div></div>`).join('')}
       <div class="pt-4 text-center"><button type="button" data-click="calculateScore" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-teal-600 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:opacity-95 transition flex items-center justify-center gap-2 mx-auto"><i class="fa-solid fa-calculator"></i> Xem Kết Quả</button></div>
     </form>
     <div id="resultBox" class="hidden mt-8 p-6 rounded-2xl border"></div>
@@ -58,7 +59,7 @@ export function render2() {
 }
 export function calculateScore() {
   const answers = [];
-  for (let i = 0; i < Q.length; i++) {
+  for (let i = 0; i < QUIZ.length; i++) {
     const c = document.querySelector<HTMLInputElement>(`input[name="q_${i}"]:checked`);
     if (!c) { toast('Vui lòng trả lời đủ 10 câu. Bạn chưa trả lời câu ' + (i + 1) + '.'); document.querySelector(`input[name="q_${i}"]`)!.scrollIntoView({ block: 'center' }); return; }
     answers.push(+c.value);

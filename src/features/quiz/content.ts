@@ -1,4 +1,4 @@
-export const Q = [
+const Q = [
   'Bạn có cảm giác bồn chồn, lo lắng khi không thể kiểm tra thông báo mạng xã hội?',
   'Bạn có thói quen cầm điện thoại lướt mạng ngay trước khi đi ngủ?',
   'Bạn từng giật mình thức giấc nửa đêm và kiểm tra điện thoại ngay lập tức?',
@@ -10,9 +10,13 @@ export const Q = [
   'Bạn có liên tục trì hoãn việc đi ngủ chỉ để xem thêm video ngắn (TikTok/Reels)?',
   'Bạn có muốn chủ động thay đổi thói quen dùng điện thoại để cải thiện điểm số học tập?'
 ];
-export const OPTS = ['Hoàn toàn không', 'Thỉnh thoảng', 'Thường xuyên', 'Rất thường xuyên'];
+const OPTS = ['Hoàn toàn không', 'Thỉnh thoảng', 'Thường xuyên', 'Rất thường xuyên'];
 // Câu 10 hỏi mong muốn nên dùng nhãn riêng. Giá trị lưu vẫn là 1–4 như các câu khác.
-export const OPTS_WANT = ['Không muốn', 'Hơi muốn', 'Khá muốn', 'Rất muốn']; // giá trị 1–4, tổng 10–40
+const OPTS_WANT = ['Không muốn', 'Hơi muốn', 'Khá muốn', 'Rất muốn']; // giá trị 1–4, tổng 10–40
+export interface QuizItem { question: string; labels: string[]; points: number[] }
+// Bộ câu hỏi gốc, dùng khi chưa tải được bảng quiz_questions. Quản trị viên sửa bản trong database, không sửa ở đây.
+// Mỗi đáp án 1–4 điểm nên tổng luôn trong 10–40. Câu 10 tính ngược: càng muốn thay đổi, điểm nguy cơ càng thấp.
+export const DEFAULT_QUIZ: QuizItem[] = Q.map((question, i) => ({ question, labels: i === 9 ? OPTS_WANT : OPTS, points: i === 9 ? [4, 3, 2, 1] : [1, 2, 3, 4] }));
 export const MAXSCORE = 40;
 export const GROUPS = [
   { name: 'Lo âu FOMO', items: [1, 4] },

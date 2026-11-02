@@ -1,6 +1,6 @@
 import type { Assessment } from '../../types';
 import { GROUPS, MAXSCORE } from '../quiz/content';
-import { groupScore, lvBadge } from '../quiz/scoring';
+import { groupScore, itemScore, lvBadge } from '../quiz/scoring';
 import { esc, fmtDate } from '../../lib/dom';
 
 export function lineChart(list: { date: string; score: number }[]) {
@@ -33,7 +33,7 @@ export function compareHtml(pre: Assessment, post: Assessment) {
     return `<tr class="border-t border-slate-100"><td class="py-1.5 pr-2">${esc(g.name)}</td><td>${a}/${g.items.length * 4}</td><td>${b}/${g.items.length * 4}</td><td class="font-semibold ${dd < 0 ? 'text-emerald-600' : dd > 0 ? 'text-rose-600' : ''}">${dd > 0 ? '+' + dd : dd}</td></tr>`;
   }).join('');
   const better = [], worse = [];
-  for (let i = 0; i < 9; i++) { const dd = post.answers[i] - pre.answers[i]; if (dd < 0) better.push(i + 1); else if (dd > 0) worse.push(i + 1); }
+  for (let i = 0; i < 9; i++) { const dd = itemScore(post.answers, i) - itemScore(pre.answers, i); if (dd < 0) better.push(i + 1); else if (dd > 0) worse.push(i + 1); }
   return `<p class="text-sm"><b>${pre.score}</b> → <b>${post.score}</b>/${MAXSCORE} điểm (<span class="font-bold ${cls}">${d > 0 ? '+' + d : d}</span>) · ${lvBadge(pre.score)} → ${lvBadge(post.score)}</p>
     <p class="text-sm text-slate-700 mt-1">${verdict}</p>
     <div class="overflow-x-auto mt-2"><table class="w-full text-xs text-left"><tr class="text-slate-500"><th class="py-1">Nhóm</th><th>Trước</th><th>Sau</th><th>Đổi</th></tr>${rows}</table></div>
