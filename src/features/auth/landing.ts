@@ -38,6 +38,18 @@ const ETHICS = [
   ['fa-file-signature', 'Bảng hỏi do nhóm tự xây dựng, tham khảo thang FOMO-S và PSQI. Sử dụng khi có sự đồng ý của nhà trường và phụ huynh.']
 ];
 
+// Lấy từ tài liệu "Hướng dẫn sử dụng FOMO Detox Kit"; sửa ở cả hai nơi cho khớp.
+const FAQ = [
+  ['Quên mật khẩu thì làm sao?', 'Học sinh nhờ giáo viên của lớp; giáo viên nhờ quản trị viên. App chưa có khôi phục qua email.'],
+  ['Tên đăng nhập báo đã có người dùng?', 'Chọn tên khác, ví dụ thêm lớp phía sau. Họ tên thì được trùng.'],
+  ['Đã đăng ký mà giáo viên không thấy em?', 'Kiểm tra tên lớp trong Hồ sơ. Gõ "8A-2" hay "Lớp 8A2" sẽ thành lớp khác; sửa thành "8A2" rồi chờ xác nhận.'],
+  ['Dữ liệu có mất khi đổi điện thoại?', 'Không. Dữ liệu lưu trong tài khoản; đăng nhập trên máy mới là thấy.'],
+  ['Mất mạng có dùng được không?', 'Được. App lưu tạm trên máy và tự gửi lên khi có mạng. Biểu tượng đám mây ở góc trên cho biết đã đồng bộ chưa.'],
+  ['Có nên làm trắc nghiệm mỗi ngày?', 'Không. Chỉ làm trước và sau lộ trình. Câu hỏi cố ý giữ nguyên để so sánh được.'],
+  ['Ai đọc được điểm của em?', 'Giáo viên lớp em và quản trị viên nhà trường. Góc Ẩn Danh thì chỉ em đọc được.'],
+  ['Muốn xóa hết dữ liệu?', 'Hồ sơ → Xóa toàn bộ dữ liệu. Xóa hẳn tài khoản thì nhờ quản trị viên.']
+];
+
 export function landingHtml(authCard: string) {
   return `<div class="bg-slate-50 text-slate-800">
   <section class="bg-gradient-to-br from-teal-700 via-teal-600 to-indigo-700 text-white">
@@ -93,6 +105,16 @@ export function landingHtml(authCard: string) {
         <div class="w-10 h-10 shrink-0 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center"><i class="fa-solid ${m[0]}"></i></div>
         <div><h3 class="font-semibold text-slate-900">${m[1]}</h3><p class="text-sm text-slate-600 mt-0.5">${m[2]}</p></div>
       </div>`).join('')}</div>
+  </section>
+
+  <section class="${section} py-14">
+    <p class="${eyebrow}">Hỏi đáp</p>
+    <h2 class="${h2}">Câu hỏi thường gặp</h2>
+    <div class="reveal-stage grid md:grid-cols-2 gap-3 mt-8 items-start">${FAQ.map((f, i) => `
+      <details style="--i:${i % 2}" class="reveal3d group bg-white rounded-xl border border-slate-200 shadow-sm">
+        <summary class="flex items-center justify-between gap-3 cursor-pointer list-none p-4 font-semibold text-slate-900 text-sm">${f[0]}<i class="fa-solid fa-chevron-down text-slate-400 text-xs transition group-open:rotate-180"></i></summary>
+        <p class="px-4 pb-4 -mt-1 text-sm text-slate-600 leading-relaxed">${f[1]}</p>
+      </details>`).join('')}</div>
   </section>
 
   <section class="bg-slate-900 text-white">
