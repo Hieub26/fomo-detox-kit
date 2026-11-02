@@ -13,7 +13,9 @@ npm run db:start             # chạy Supabase local, tự áp dụng supabase/m
 npm run dev                  # mở http://localhost:8000
 ```
 
-Dừng database bằng `npm run db:stop`. Service worker chỉ chạy ở bản build; xem thử bản build bằng `npm run build` rồi `npm run preview`.
+Dừng database bằng `npm run db:stop`. Service worker chỉ chạy ở bản build; xem thử bản build bằng `npm run build` rồi `npm run preview`. App mở từ cache của service worker, nên sau khi đưa bản mới lên, người dùng thấy bản đó từ lần mở sau.
+
+Icon Font Awesome được rút gọn còn những icon app dùng: `npm run dev` và `npm run build` tự sinh lại `src/styles/icons.css`. Khi dùng icon mới, hãy viết đủ tên `fa-...` trong code, không ghép từ nhiều mảnh, và khởi động lại `npm run dev`.
 
 Tạo mã giáo viên (mã chỉ hiện một lần, chạy lại sẽ đổi mã và mã cũ hết hiệu lực):
 
@@ -27,6 +29,7 @@ Sau khi đổi migration, chạy `npm run db:types` để sinh lại `src/types/
 
 ```
 public/             file tĩnh giữ nguyên tên (icon, manifest)
+scripts/            sinh font icon rút gọn
 src/
   main.ts           điểm vào
   service-worker.js mẫu service worker, vite.config.ts điền danh sách file khi build
