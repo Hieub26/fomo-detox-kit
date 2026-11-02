@@ -57,9 +57,7 @@ export function renderAuth(message?: string) {
       <div id="afCodeWrap" class="hidden"><label class="${authLabel}" for="afCode">Mã giáo viên</label><input id="afCode" autocomplete="off" spellcheck="false" class="${authInput}"></div>` : ''}
       <button id="afSubmit" class="w-full py-3 bg-gradient-to-r from-teal-600 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:opacity-95 transition">${signup ? 'Tạo tài khoản' : 'Đăng nhập'}</button>
     </form>
-    <p class="text-xs text-slate-500 mt-4 text-center">${signup
-      ? 'Điểm trắc nghiệm và tiến độ lộ trình sẽ lưu trong tài khoản; giáo viên của lớp và quản trị viên nhà trường xem được. Giáo viên sẽ xác nhận bạn vào lớp. Không dùng tên đăng nhập có thông tin riêng tư.'
-      : 'Quên mật khẩu? Học sinh nhờ giáo viên của lớp, giáo viên nhờ quản trị viên đặt lại giúp.'}</p>`);
+    ${signup ? `<p class="text-xs text-slate-500 mt-4 text-center">Điểm trắc nghiệm và tiến độ lộ trình sẽ lưu trong tài khoản; giáo viên của lớp và quản trị viên nhà trường xem được. Giáo viên sẽ xác nhận bạn vào lớp. Không dùng tên đăng nhập có thông tin riêng tư.</p>` : ''}`);
   startReveal(box);
   if (message) $('#authCard').scrollIntoView();
   $('#authForm').addEventListener('submit', submitAuth);
