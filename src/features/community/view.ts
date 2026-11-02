@@ -2,6 +2,7 @@ import { checkedCount, completed, pct, streak } from '../program/progress';
 import { compareHtml, lineChart } from '../progress/charts';
 import { MAXSCORE } from '../quiz/content';
 import { assessById, levelIdx, lvBadge, sortedAssess } from '../quiz/scoring';
+import { supportBox } from '../quiz/view';
 import { refresh } from '../shell/navigation';
 import { $, card, esc, fmtDate, toast, today, uid } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
@@ -14,13 +15,17 @@ export const SAMPLE_POSTS = [
 // Từ tục, chửi bới và viết tắt phổ biến. So khớp theo cả từ (không phải một phần của từ khác),
 // nên các câu kể lại như "em bị bạn chửi" vẫn gửi được. Thêm từ vào hai danh sách dưới đây khi cần.
 export const BAD_WORDS = [
-  'địt', 'đụ', 'đéo', 'đếch', 'lồn', 'buồi', 'cặc', 'đĩ', 'điếm', 'chó chết', 'óc chó', 'thằng chó', 'con chó', 'mẹ mày',
+  'địt', 'đụ', 'đéo', 'đếch', 'lồn', 'buồi', 'cặc', 'đĩ', 'điếm', 'chó chết', 'óc chó', 'thằng chó', 'mẹ mày',
   'bố mày', 'con mẹ mày', 'khốn nạn', 'đồ khốn', 'súc vật', 'bố láo', 'mất dạy', 'mất nết', 'đồ ngu', 'ngu như bò',
-  'ngu như chó', 'thằng ngu', 'con ngu', 'đồ điên', 'cút đi', 'chết đi', 'đi chết đi'
+  'ngu như chó', 'thằng ngu', 'con ngu', 'đồ điên', 'cút đi'
 ];
+// Câu có dấu hiệu tự làm hại mình không bao giờ bị chặn: bài vẫn được lưu và app hiện nơi tìm hỗ trợ.
+export const SELF_HARM = ['muốn chết', 'chết đi', 'tự tử', 'tự sát', 'không muốn sống', 'tự làm đau', 'tự làm hại'];
 export const BAD_ABBR = ['dm', 'đm', 'dmm', 'đmm', 'dcm', 'đcm', 'dkm', 'đkm', 'vcl', 'vkl', 'vl', 'vc', 'vcc', 'cc', 'cl', 'clm', 'clgt', 'cmm', 'cmnr', 'loz', 'dit', 'đjt', 'djt', 'fuck', 'shit', 'bitch', 'wtf', 'đờ mờ'];
 const words = (t: string) => ' ' + t.toLowerCase().normalize('NFC').replace(/[^\p{L}\p{N}]+/gu, ' ').trim() + ' ';
 export const hasBadWords = (text: string) => { const w = words(text); return [...BAD_WORDS, ...BAD_ABBR].some(b => w.includes(' ' + b + ' ')); };
+export const hasSelfHarm = (text: string) => { const w = words(text); return SELF_HARM.some(b => w.includes(' ' + b + ' ')); };
+let showSupport = false; // bài vừa gửi có dấu hiệu tự làm hại mình; bỏ khi gửi bài khác hoặc tải lại trang
 
 export function badges(): [string, string, string, boolean, string][] {
   const list = sortedAssess();
@@ -78,6 +83,7 @@ export function render5() {
       <textarea id="confessionInput" rows="3" maxlength="1500" class="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Viết chia sẻ hoặc trải nghiệm của bạn tại đây... (Hệ thống tự động ẩn danh)"></textarea>
       <div class="flex justify-between items-center mt-3"><span class="text-xs text-slate-400"><i class="fa-solid fa-user-secret mr-1"></i> Không hiển thị tên của bạn</span>
         <button data-click="postConfession" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-lg shadow-sm transition"><i class="fa-solid fa-paper-plane mr-1"></i> Gửi Chia Sẻ</button></div></div>
+    ${showSupport ? `<div class="mb-6"><p class="text-sm text-slate-700">Cảm ơn bạn đã chia sẻ. Bạn không phải một mình đối mặt với chuyện này.</p>${supportBox()}</div>` : ''}
     <div class="space-y-4">${S.posts.slice().reverse().map(p => `
       <div class="p-4 rounded-xl border border-teal-100 bg-teal-50/40"><div class="flex justify-between items-center mb-2">
         <span class="text-xs font-bold text-teal-700"><i class="fa-solid fa-user-ninja mr-1"></i> Bạn • Ẩn danh</span>
@@ -91,7 +97,8 @@ export function render5() {
 export function postConfession() {
   const input = $('#confessionInput'), text = input.value.trim();
   if (!text) { toast('Vui lòng nhập nội dung trước khi gửi!'); return; }
-  if (hasBadWords(text)) { toast('Nội dung chứa từ ngữ không phù hợp. Vui lòng giữ môi trường văn minh!'); return; }
+  showSupport = hasSelfHarm(text);
+  if (!showSupport && hasBadWords(text)) { toast('Nội dung chứa từ ngữ không phù hợp. Vui lòng giữ môi trường văn minh!'); return; }
   S.posts.push({ id: uid(), date: today(), text }); save(); refresh(); toast('Chia sẻ của bạn đã được lưu.');
 }
 export function delPost(id: string) {
