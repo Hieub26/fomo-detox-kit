@@ -1,6 +1,6 @@
 import type { Assessment } from '../../types';
 import { compareHtml } from '../progress/charts';
-import { COLOR, LEVELS, MAXSCORE, OPTS, Q, SCALE_LABEL, SUPPORT } from './content';
+import { COLOR, LEVELS, MAXSCORE, OPTS, OPTS_WANT, Q, SCALE_LABEL, SUPPORT } from './content';
 import { assessById, lastAssess, levelIdx, scoreOf } from './scoring';
 import { switchTab } from '../shell/navigation';
 import { $, card, esc, fmtDate, toast, uid } from '../../lib/dom';
@@ -47,7 +47,7 @@ export function render2() {
     <form id="fomoForm" class="space-y-6" data-submit="noop">
       ${Q.map((q, i) => `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
         <p class="font-semibold text-slate-800 text-sm mb-3">${i + 1}. ${esc(q)}</p>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">${OPTS.map((o, k) => `
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">${(i === 9 ? OPTS_WANT : OPTS).map((o, k) => `
           <label class="flex items-center gap-2 p-2 bg-white rounded border border-slate-200 cursor-pointer hover:bg-teal-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50">
             <input type="radio" name="q_${i}" value="${k + 1}" class="accent-teal-600"> ${o}</label>`).join('')}</div></div>`).join('')}
       <div class="pt-4 text-center"><button type="button" data-click="calculateScore" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-teal-600 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:opacity-95 transition flex items-center justify-center gap-2 mx-auto"><i class="fa-solid fa-calculator"></i> Xem Kết Quả</button></div>

@@ -10,7 +10,9 @@ export const Q = [
   'Bạn có liên tục trì hoãn việc đi ngủ chỉ để xem thêm video ngắn (TikTok/Reels)?',
   'Bạn có muốn chủ động thay đổi thói quen dùng điện thoại để cải thiện điểm số học tập?'
 ];
-export const OPTS = ['Hoàn toàn không', 'Thỉnh thoảng', 'Thường xuyên', 'Rất thường xuyên']; // giá trị 1–4, tổng 10–40
+export const OPTS = ['Hoàn toàn không', 'Thỉnh thoảng', 'Thường xuyên', 'Rất thường xuyên'];
+// Câu 10 hỏi mong muốn nên dùng nhãn riêng. Giá trị lưu vẫn là 1–4 như các câu khác.
+export const OPTS_WANT = ['Không muốn', 'Hơi muốn', 'Khá muốn', 'Rất muốn']; // giá trị 1–4, tổng 10–40
 export const MAXSCORE = 40;
 export const GROUPS = [
   { name: 'Lo âu FOMO', items: [1, 4] },
