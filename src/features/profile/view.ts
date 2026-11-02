@@ -1,23 +1,11 @@
 import { claimAdmin as claimAdminRpc } from '../admin/api';
-import { Q } from '../quiz/content';
 import { authError } from '../auth/view';
-import { LEVELS } from '../quiz/content';
-import { levelIdx, sortedAssess } from '../quiz/scoring';
 import { show } from '../shell/navigation';
 import { Sync } from '../sync/sync';
-import { $, bt, card, download, esc, inp, toCsv, toast } from '../../lib/dom';
+import { $, bt, card, esc, inp, toast } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
 import { sb } from '../../lib/supabase';
 import { S, blank, save, setS } from '../../state/store';
-
-export function assessRows() {
-  const rows: (string | number)[][] = [['ma_hs', 'ten', 'lop', 'ngay', 'loai', 'tong_diem_10_40', 'muc', 'lo_trinh_ngay', ...Q.map((_, i) => 'c' + (i + 1))]];
-  sortedAssess().forEach(a => {
-    const pr = a.programId && S.programs.find(p => p.id === a.programId);
-    rows.push([S.profile.code, S.profile.name, S.profile.cls, a.date.slice(0, 10), a.kind, a.score, LEVELS[levelIdx(a.score)].short, pr ? pr.days : '', ...a.answers]);
-  });
-  return rows;
-}
 
 export function render6() {
   const teacher = S.profile.role === 'teacher', admin = S.profile.role === 'admin';
@@ -57,10 +45,9 @@ export function render6() {
       <div class="mt-7 pt-5 border-t border-slate-100"><button data-click="logout" class="px-4 py-2 text-sm font-semibold rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition"><i class="fa-solid fa-right-from-bracket mr-1"></i> Đăng xuất</button></div>
     </div>
     <div class="${card}"><h3 class="font-bold text-lg mb-1"><i class="fa-solid fa-database text-indigo-600 mr-1"></i> Dữ liệu của bạn</h3>
-      <p class="text-xs text-slate-500 mb-3">Dữ liệu lưu trong tài khoản và theo bạn sang thiết bị khác. File CSV gồm điểm trắc nghiệm và tiến độ lộ trình của riêng tài khoản này, không gồm Góc Ẩn Danh.</p>
-      ${admin ? `<p class="text-xs rounded-lg px-3 py-2 mb-3 bg-slate-50 text-slate-600 border border-slate-200"><i class="fa-solid fa-circle-info mr-1"></i>Xuất dữ liệu toàn trường ở tab <button data-click="switchTab" data-arg="8" class="font-semibold text-teal-700 underline">6. Quản Trị</button>.</p>` : ''}
-      <div class="flex gap-2 flex-wrap"><button data-click="exportCsv" class="${bt} bg-indigo-600 hover:bg-indigo-700">Xuất CSV</button>
-        <button data-click="wipe" class="${bt} bg-rose-600 hover:bg-rose-700">Xóa toàn bộ dữ liệu</button></div></div>
+      <p class="text-xs text-slate-500 mb-3">Điểm trắc nghiệm, lộ trình và Góc Ẩn Danh lưu trong tài khoản và theo bạn sang thiết bị khác.</p>
+      ${admin ? `<p class="text-xs rounded-lg px-3 py-2 mb-3 bg-slate-50 text-slate-600 border border-slate-200"><i class="fa-solid fa-circle-info mr-1"></i>Xem và xuất dữ liệu toàn trường ở tab <button data-click="switchTab" data-arg="8" class="font-semibold text-teal-700 underline">6. Quản Trị</button>.</p>` : ''}
+      <div class="flex gap-2 flex-wrap"><button data-click="wipe" class="${bt} bg-rose-600 hover:bg-rose-700">Xóa toàn bộ dữ liệu</button></div></div>
   </div>`;
 }
 export async function saveProfile() {
@@ -97,7 +84,6 @@ export async function claimAdmin() {
   toast('Tài khoản đã chuyển thành quản trị viên.');
   show(8);
 }
-export const exportCsv = () => download(`fomo-${S.profile.code}.csv`, toCsv(assessRows()), 'text/csv');
 export function wipe() {
   if (!confirm('Xóa toàn bộ dữ liệu trong tài khoản, trên mọi thiết bị? Không thể hoàn tác.')) return;
   if (!confirm('Chắc chắn xóa? Điểm, lộ trình và Góc Ẩn Danh sẽ mất vĩnh viễn.')) return;
@@ -111,7 +97,6 @@ registerActions({
   togglePasswordView: ({ el }) => { ['#pnew', '#pnew2'].forEach(id => { $(id).type = el.checked ? 'text' : 'password'; }); },
   claimAdmin: () => claimAdmin(),
   claimTeacher: () => claimTeacher(),
-  exportCsv: () => exportCsv(),
   saveProfile: () => saveProfile(),
   wipe: () => wipe(),
 });
