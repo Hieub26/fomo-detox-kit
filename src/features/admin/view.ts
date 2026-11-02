@@ -234,7 +234,7 @@ function quizCard() {
     <p class="text-xs text-slate-500 mt-1 mb-4">Mỗi đáp án được 1–4 điểm, điểm càng cao nghĩa là nguy cơ càng cao. Tổng luôn trong 10–${MAXSCORE} nên các mức Nhẹ, Trung bình, Cao giữ nguyên ngưỡng.</p>
     <div class="space-y-4">${items.map((q, i) => `<div data-quiz-item class="p-4 bg-slate-50 rounded-xl border border-slate-200">
       <label class="block text-sm font-semibold text-slate-800 mb-2">Câu ${i + 1}
-        <textarea data-q rows="2" maxlength="300" class="mt-1 w-full font-normal ${cls}">${esc(q.question)}</textarea></label>
+        <textarea data-q rows="3" maxlength="300" class="mt-1 w-full font-normal ${cls}">${esc(q.question)}</textarea></label>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-2">${q.labels.map((l, k) => `<div class="flex gap-2">
         <input data-label maxlength="60" value="${esc(l)}" aria-label="Câu ${i + 1}, nội dung đáp án ${k + 1}" class="flex-1 min-w-0 ${cls}">
         <select data-points aria-label="Câu ${i + 1}, điểm đáp án ${k + 1}" class="${cls}">${[1, 2, 3, 4].map(p => `<option value="${p}" ${q.points[k] === p ? 'selected' : ''}>${p} điểm</option>`).join('')}</select></div>`).join('')}</div>
