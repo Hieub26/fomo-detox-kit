@@ -53,7 +53,6 @@ export function landingHtml(authCard: string) {
         <p class="text-sm text-teal-100/80 mt-3"><i class="fa-solid fa-school mr-1"></i> Trường THCS Nguyễn Tất Thành, Thái Nguyên</p>
         <div class="flex flex-wrap gap-3 mt-7">
           <button data-click="landingGo" data-arg="method" class="px-5 py-2.5 bg-white text-teal-700 font-semibold text-sm rounded-xl shadow hover:bg-teal-50 transition">Xem phương pháp</button>
-          <button data-click="landingGo" data-arg="authCard" class="lg:hidden px-5 py-2.5 border border-white/40 text-white font-semibold text-sm rounded-xl hover:bg-white/10 transition">Đăng nhập / Đăng ký</button>
         </div>
       </div>
       <div id="authCard" class="bg-white text-slate-800 rounded-2xl shadow-2xl p-6 scroll-mt-4">${authCard}</div>
