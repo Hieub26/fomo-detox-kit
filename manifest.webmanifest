@@ -1,0 +1,14 @@
+{
+  "name": "FOMO DETOX KIT",
+  "short_name": "FOMO Detox",
+  "description": "Khảo sát FOMO, liệu trình detox 7/14/21 ngày và theo dõi tiến độ.",
+  "lang": "vi",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1b1442",
+  "theme_color": "#5b3df5",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
