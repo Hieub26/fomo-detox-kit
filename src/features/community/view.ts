@@ -73,7 +73,7 @@ export function render5() {
   ${progressCard()}
   <div class="${card}">
     <h3 class="font-bold text-xl text-slate-800 mb-1">Góc Chia Sẻ Ẩn Danh (Confession)</h3>
-    <p class="text-xs text-slate-500 mb-6">Nơi học sinh THCS Nguyễn Tất Thành trải lòng về áp lực FOMO &amp; lan tỏa động lực Detox. Chỉ bạn đọc được bài của mình: bài lưu trong tài khoản của bạn, giáo viên và quản trị viên không xem được trong app và bài không nằm trong file nộp.</p>
+    <p class="text-xs text-slate-500 mb-6">Nơi học sinh THCS Nguyễn Tất Thành trải lòng về áp lực FOMO &amp; lan tỏa động lực Detox. Chỉ bạn đọc được bài của mình: bài lưu trong tài khoản của bạn, giáo viên và quản trị viên không xem được trong app.</p>
     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
       <textarea id="confessionInput" rows="3" maxlength="1500" class="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Viết chia sẻ hoặc trải nghiệm của bạn tại đây... (Hệ thống tự động ẩn danh)"></textarea>
       <div class="flex justify-between items-center mt-3"><span class="text-xs text-slate-400"><i class="fa-solid fa-user-secret mr-1"></i> Không hiển thị tên của bạn</span>
