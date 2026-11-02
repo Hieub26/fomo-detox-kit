@@ -1,6 +1,6 @@
 import type { Assessment, Program, UserRole } from '../../types';
 import { adminDeleteUser, adminResetPassword, adminSaveQuiz, adminSetRole, rotateAdminCode, rotateTeacherCode, setStudentApproval } from './api';
-import { checkedCount, pct } from '../program/progress';
+import { pct, progressBar } from '../program/progress';
 import { compareHtml, lineChart } from '../progress/charts';
 import { QUIZ, setQuiz } from '../quiz/config';
 import { GROUPS, LEVELS, MAXSCORE, type QuizItem } from '../quiz/content';
@@ -10,6 +10,7 @@ import { TABLES, fetchAllRows } from '../sync/sync';
 import { randomPassword } from '../teacher/view';
 import { $, bt, card, daysBetween, download, esc, fmtDate, toCsv, toast } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
+import { openModal } from '../../lib/modal';
 import { sb } from '../../lib/supabase';
 
 interface Account { id: string; username: string; full_name: string; class_name: string | null; role: UserRole; approved: boolean }
@@ -214,8 +215,7 @@ function usersHtml() {
       <span class="text-xs text-slate-600 px-2">Trang ${A.page + 1}/${pages}</span>
       <button data-click="adminPage" data-arg="${A.page + 1}" class="${smallBtn}" ${A.page >= pages - 1 ? 'disabled' : ''} aria-label="Trang sau"><i class="fa-solid fa-chevron-right"></i></button>
     </div>` : ''}
-  </div>
-  ${studentDetail()}`;
+  </div>`;
 }
 
 function studentDetail() {
@@ -226,8 +226,8 @@ function studentDetail() {
     const pre = as.find(a => a.id === p.preId), post = as.find(a => a.id === p.postId);
     const st = p.status === 'active' ? 'đang thực hiện' : p.status === 'done' ? 'đã xong' : 'đã dừng';
     return `<div class="mt-3 p-4 border border-slate-200 rounded-xl"><h4 class="font-bold text-sm">Lộ trình ${p.days} ngày • ${fmtDate(p.start)}</h4>
-      <p class="text-xs text-slate-500 mb-2">Hoàn thành ${checkedCount(p)}/${p.days} ngày (${pct(p)}%) • ${st}</p>
-      ${pre && post ? compareHtml(pre, post) : '<p class="text-xs text-slate-500">Chưa đủ khảo sát trước và sau để so sánh.</p>'}</div>`;
+      <p class="text-xs text-slate-500">${st}</p>${progressBar(p)}
+      <div class="mt-2">${pre && post ? compareHtml(pre, post) : '<p class="text-xs text-slate-500">Chưa đủ khảo sát trước và sau để so sánh.</p>'}</div></div>`;
   }).join('');
   return `<div class="mt-4 p-4 border border-teal-200 rounded-xl">
     <h3 class="font-bold text-lg text-slate-800">${esc(name(s))} <span class="text-xs font-normal text-slate-500">(${esc(s.username)} • ${esc(s.class_name || NO_CLASS)})</span></h3>
@@ -414,7 +414,7 @@ registerActions({
   adminDelete: ({ arg }) => deleteAccount(arg),
   adminFilterClass: ({ el }) => { A.cls = el.value; A.selected = null; A.page = 0; drawUsers(); },
   adminPage: ({ arg }) => { A.page = +arg; A.selected = null; drawUsers(); },
-  adminSelect: ({ arg }) => { A.selected = A.selected === arg ? null : arg; drawUsers(); },
+  adminSelect: ({ arg }) => { A.selected = arg; drawUsers(); const d = studentDetail(); if (d) openModal(d); },
   adminResetPassword: ({ arg }) => resetPassword(arg),
   adminPromote: ({ arg }) => setRole(arg, 'teacher'),
   adminDemote: ({ arg }) => setRole(arg, 'student'),

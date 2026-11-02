@@ -1,5 +1,5 @@
 import type { Assessment, Program } from '../../types';
-import { checkedCount, pct } from '../program/progress';
+import { pct, progressBar } from '../program/progress';
 import { compareHtml, lineChart } from '../progress/charts';
 import { LEVELS, MAXSCORE } from '../quiz/content';
 import { byDate, levelIdx, lvBadge } from '../quiz/scoring';
@@ -7,6 +7,7 @@ import { tab } from '../shell/navigation';
 import { Sync, TABLES, fetchAllRows } from '../sync/sync';
 import { $, bt, card, download, esc, fmtDate, inp, toCsv, toast } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
+import { isModalOpen, openModal, updateModal } from '../../lib/modal';
 import { sb } from '../../lib/supabase';
 
 interface Student { id: string; username: string; full_name: string; class_name: string | null; approved: boolean }
@@ -111,7 +112,7 @@ export function drawTeacher() {
           <td class="text-right"><button data-click="selectStudent" data-arg="${esc(r.s.id)}" class="px-2.5 py-1 border border-slate-200 rounded-lg text-xs hover:bg-slate-50">Chi tiết</button></td></tr>`).join('')}
       </table></div>` : `<p class="text-sm text-slate-500">${T.classes.length ? 'Chưa có học sinh nào đăng ký vào lớp này.' : 'Thêm lớp để xem học sinh.'}</p>`}
     </div>
-    ${studentDetail()}`;
+    `;
 }
 
 export function studentDetail() {
@@ -122,8 +123,8 @@ export function studentDetail() {
     const pre = as.find(a => a.id === p.preId), post = as.find(a => a.id === p.postId);
     const st = p.status === 'active' ? 'đang thực hiện' : p.status === 'done' ? 'đã xong' : 'đã dừng';
     return `<div class="mt-3 p-4 border border-slate-200 rounded-xl"><h4 class="font-bold text-sm">Lộ trình ${p.days} ngày • ${fmtDate(p.start)}</h4>
-      <p class="text-xs text-slate-500 mb-2">Hoàn thành ${checkedCount(p)}/${p.days} ngày (${pct(p)}%) • ${st}</p>
-      ${pre && post ? compareHtml(pre, post) : '<p class="text-xs text-slate-500">Chưa đủ khảo sát trước và sau để so sánh.</p>'}</div>`;
+      <p class="text-xs text-slate-500">${st}</p>${progressBar(p)}
+      <div class="mt-2">${pre && post ? compareHtml(pre, post) : '<p class="text-xs text-slate-500">Chưa đủ khảo sát trước và sau để so sánh.</p>'}</div></div>`;
   }).join('');
   return `<div class="${card}">
     <div class="flex items-center justify-between flex-wrap gap-2">
@@ -138,7 +139,8 @@ export function studentDetail() {
 }
 
 export function filterClass(c: string) { T.filter = c; T.selected = null; drawTeacher(); }
-export function selectStudent(id: string) { T.selected = T.selected === id ? null : id; T.tempPass = null; drawTeacher(); }
+// Mở chi tiết học sinh trong cửa sổ nổi thay vì đẩy xuống cuối trang.
+export function selectStudent(id: string) { T.selected = id; T.tempPass = null; drawTeacher(); openModal(studentDetail()); }
 
 export async function addClass(e: Event) {
   e.preventDefault();
@@ -174,6 +176,7 @@ export async function resetStudentPassword(id: string) {
   if (error) { console.error(error); toast('Không đặt lại được mật khẩu.'); return; }
   T.tempPass = { id, value };
   drawTeacher();
+  if (isModalOpen()) updateModal(studentDetail()); // mật khẩu mới hiện ngay trong cửa sổ đang mở
 }
 export async function setApproval(id: string, ok: boolean) {
   const s = T.students.find(x => x.id === id);
