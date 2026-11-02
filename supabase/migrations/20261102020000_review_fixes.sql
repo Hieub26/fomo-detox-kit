@@ -4,7 +4,8 @@
    "Do you want to change your phone habits?" used to add to the risk score, so students who
    wanted to change looked worse. It now scores 5 - answer, keeping the 10-40 range and thresholds.
    The app computes the same in scoreOf(); this recomputes rows saved by the old app. */
-update public.assessments set score = score - answers[10] + (5 - answers[10]);
+update public.assessments
+  set score = (select sum(a) from unnest(answers[1:9]) a) + (5 - answers[10]);
 
 /* ---------- 2. Teachers confirm students into their class ----------
    Anyone can sign up and type any class name, so a student only counts in class lists and
