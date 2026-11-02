@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestClient } from '@supabase/postgrest-js';
 import { appReady, refresh, tab } from '../shell/navigation';
 import { $ } from '../../lib/dom';
 import { sb } from '../../lib/supabase';
@@ -52,7 +52,7 @@ export const GROUPS_KEYS = Object.keys(TABLES) as GroupKey[];
 export const rowJson = <K extends GroupKey>(key: K, item: GroupItems[K]) => JSON.stringify(TABLES[key].toRow(item));
 
 // Tên bảng ở đây là biến nên client không suy ra được cột. Kiểu của dòng dữ liệu do TABLES bảo đảm.
-const groupTable = (key: GroupKey) => (sb as unknown as SupabaseClient).from(TABLES[key].table);
+const groupTable = (key: GroupKey) => (sb as unknown as PostgrestClient).from(TABLES[key].table);
 const byId = (a: { id: string }, b: { id: string }) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0); // id bắt đầu bằng thời gian tạo
 // Không có mã lỗi HTTP nghĩa là mất mạng; có mã nghĩa là máy chủ từ chối dữ liệu.
 const badgeForError = (e: unknown) => ((e as { code?: unknown } | null)?.code ? 'error' : 'off');
