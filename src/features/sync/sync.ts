@@ -6,7 +6,6 @@ import { S, blank, setS } from '../../state/store';
 import type { AppState, Assessment, AudioSession, Post, Program, UserRole } from '../../types';
 import type { Database } from '../../types/database';
 
-export const LEGACY_KEY = 'fomo_detox_kit_v2'; // dữ liệu của bản cũ, khi app chưa có tài khoản
 export const cacheKey = (uid: string) => 'fomo_cache_' + uid;
 
 type Tables = Database['public']['Tables'];

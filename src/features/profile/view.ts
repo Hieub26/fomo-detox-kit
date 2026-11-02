@@ -2,7 +2,7 @@ import { claimAdmin as claimAdminRpc } from '../admin/api';
 import { Q } from '../quiz/content';
 import { authError } from '../auth/view';
 import { LEVELS } from '../quiz/content';
-import { byDate, levelIdx, scoreOf, sortedAssess } from '../quiz/scoring';
+import { levelIdx, sortedAssess } from '../quiz/scoring';
 import { show } from '../shell/navigation';
 import { sanitizeData } from '../sync/sanitize';
 import { Sync } from '../sync/sync';
@@ -10,11 +10,7 @@ import { $, bt, card, download, esc, inp, toCsv, toast, today } from '../../lib/
 import { registerActions } from '../../lib/actions';
 import { sb } from '../../lib/supabase';
 import { S, blank, save, setS } from '../../state/store';
-import type { Assessment, Profile, Program } from '../../types';
 
-export function teacherPayload() {
-  return { app: 'FOMO_DETOX_KIT', version: 2, exported: new Date().toISOString(), profile: S.profile, assessments: S.assessments, programs: S.programs };
-}
 export function assessRows() {
   const rows: (string | number)[][] = [['ma_hs', 'ten', 'lop', 'ngay', 'loai', 'tong_diem_10_40', 'muc', 'lo_trinh_ngay', ...Q.map((_, i) => 'c' + (i + 1))]];
   sortedAssess().forEach(a => {
@@ -51,15 +47,12 @@ export function render6() {
     <div class="${card}"><h3 class="font-bold text-lg mb-1"><i class="fa-solid fa-file-export text-indigo-600 mr-1"></i> Xuất kết quả</h3>
       <p class="text-xs text-slate-500 mb-3">File gồm điểm trắc nghiệm và tiến độ lộ trình của riêng tài khoản này. Không gồm Góc Ẩn Danh.</p>
       ${admin ? `<p class="text-xs rounded-lg px-3 py-2 mb-3 bg-slate-50 text-slate-600 border border-slate-200"><i class="fa-solid fa-circle-info mr-1"></i>Xuất dữ liệu toàn trường ở tab <button data-click="switchTab" data-arg="8" class="font-semibold text-teal-700 underline">6. Quản Trị</button>.</p>` : ''}
-      <div class="flex gap-2 flex-wrap"><button data-click="exportCsv" class="${bt} bg-indigo-600 hover:bg-indigo-700">Xuất CSV</button><button data-click="exportJson" class="${bt} bg-indigo-600 hover:bg-indigo-700">Xuất JSON</button></div>
+      <div class="flex gap-2 flex-wrap"><button data-click="exportCsv" class="${bt} bg-indigo-600 hover:bg-indigo-700">Xuất CSV</button></div>
       <h3 class="font-bold text-lg mt-6 mb-1"><i class="fa-solid fa-database text-amber-600 mr-1"></i> Sao lưu &amp; khôi phục</h3>
       <p class="text-xs text-slate-500 mb-3">Dữ liệu lưu trong tài khoản và theo bạn sang thiết bị khác. Bản sao lưu là file riêng phòng khi cần.</p>
       <div class="flex gap-2 flex-wrap items-center"><button data-click="backup" class="${bt} bg-amber-600 hover:bg-amber-700">Tải bản sao lưu</button>
         <label class="${bt} bg-slate-700 hover:bg-slate-800 cursor-pointer">Khôi phục<input type="file" accept=".json" hidden data-change="restore"></label>
         <button data-click="wipe" class="${bt} bg-rose-600 hover:bg-rose-700">Xóa toàn bộ dữ liệu</button></div></div>
-    ${teacher ? `<div class="${card} lg:col-span-2"><h3 class="font-bold text-lg mb-1"><i class="fa-solid fa-chalkboard-user text-teal-600 mr-1"></i> Tổng hợp từ file</h3>
-      <p class="text-xs text-slate-500 mb-3">Chọn nhiều file JSON do học sinh nộp để xem tổng hợp. Dữ liệu chỉ xử lý trên máy này, không gửi đi đâu.</p>
-      <input type="file" accept=".json" multiple data-change="teacherImport" class="text-sm"><div id="tout" class="mt-4"></div></div>` : ''}
   </div>`;
 }
 export async function saveProfile() {
@@ -96,7 +89,6 @@ export async function claimAdmin() {
   show(8);
 }
 export const exportCsv = () => download(`fomo-${S.profile.code}.csv`, toCsv(assessRows()), 'text/csv');
-export const exportJson = () => download(`fomo-${S.profile.code}.json`, JSON.stringify(teacherPayload(), null, 1));
 export const backup = () => download(`fomo-sao-luu-${today()}.json`, JSON.stringify(S, null, 1));
 export function wipe() {
   if (!confirm('Xóa toàn bộ dữ liệu trong tài khoản, trên mọi thiết bị? Không thể hoàn tác.')) return;
@@ -115,34 +107,6 @@ export function restore(f?: File) {
     save(); toast('Đã khôi phục.'); render6();
   }).catch(() => toast('File sao lưu không hợp lệ.'));
 }
-// File học sinh nộp qua "Nộp kết quả cho giáo viên".
-interface StudentExport { app: string; profile: Profile; assessments: Assessment[]; programs?: Program[] }
-const isStudentExport = (d: unknown): d is StudentExport => {
-  const x = d as Partial<StudentExport> | null;
-  return !!x && x.app === 'FOMO_DETOX_KIT' && Array.isArray(x.assessments) && !!x.profile;
-};
-export function teacherImport(files: FileList) {
-  Promise.all([...files].map(f => f.text().then((t): unknown => { try { return JSON.parse(t); } catch (e) { return null; } }))).then(all => {
-    const data = all.filter(isStudentExport);
-    const out = $('#tout');
-    if (!data.length) { out.innerHTML = '<p class="text-sm text-rose-600">Không có file hợp lệ. Hãy chọn file JSON do học sinh xuất (Nộp kết quả cho giáo viên).</p>'; return; }
-    const head = ['Mã HS', 'Tên', 'Lớp', 'Số lần KS', 'Điểm đầu', 'Điểm gần nhất', 'Thay đổi', 'Lộ trình', '% hoàn thành'];
-    const rows = data.map((d): (string | number)[] => {
-      // Tính lại điểm từ đáp án: file xuất trước khi câu 10 được tính ngược có điểm cũ.
-      const as = d.assessments.map(a => (Array.isArray(a.answers) && a.answers.length === 10 ? { ...a, score: scoreOf(a.answers) } : a)).sort(byDate), f = as[0], l = as[as.length - 1];
-      const p = (d.programs || []).slice(-1)[0];
-      return [d.profile.code, d.profile.name, d.profile.cls, as.length, f ? f.score : '', l ? l.score : '', f && as.length > 1 ? l.score - f.score : '',
-        p ? p.days + ' ngày' : '', p ? Math.round(Object.keys(p.checks).filter(k => p.checks[k]).length / p.days * 100) : ''];
-    });
-    const v = rows.map(r => r[6]).filter((c): c is number => c !== '');
-    const avg = v.length ? (v.reduce((a, c) => a + c, 0) / v.length).toFixed(1) : 'n/a';
-    out.innerHTML = `<p class="text-sm mb-2">${rows.length} học sinh. Thay đổi điểm trung bình (HS có từ 2 lần trắc nghiệm): <b>${avg}</b></p>
-      <div class="overflow-x-auto"><table class="w-full text-sm text-left"><tr class="text-xs text-slate-500">${head.map(h => `<th class="py-1 pr-3">${h}</th>`).join('')}</tr>
-      ${rows.map(r => `<tr class="border-t border-slate-100">${r.map(c => `<td class="py-1.5 pr-3">${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>
-      <button id="tall" class="${bt} bg-teal-600 hover:bg-teal-700 mt-3">Tải CSV tổng hợp</button>`;
-    $('#tall').onclick = () => download('fomo-tong-hop-lop.csv', toCsv([head, ...rows]), 'text/csv');
-  });
-}
 
 registerActions({
   backup: () => backup(),
@@ -150,9 +114,7 @@ registerActions({
   claimAdmin: () => claimAdmin(),
   claimTeacher: () => claimTeacher(),
   exportCsv: () => exportCsv(),
-  exportJson: () => exportJson(),
   restore: ({ el }) => restore(el.files?.[0]),
   saveProfile: () => saveProfile(),
-  teacherImport: ({ el }) => { if (el.files) teacherImport(el.files); },
   wipe: () => wipe(),
 });

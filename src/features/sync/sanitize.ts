@@ -1,7 +1,5 @@
 import { scoreOf } from '../quiz/scoring';
-import { GROUPS_KEYS, LEGACY_KEY, Sync, items, type GroupItems, type GroupKey } from './sync';
-import { toast, uid } from '../../lib/dom';
-import { save } from '../../state/store';
+import { uid } from '../../lib/dom';
 import type { Assessment, AudioSession, Post, Program } from '../../types';
 
 type Raw = Record<string, unknown>;
@@ -33,26 +31,4 @@ export function sanitizeData(d: unknown) {
       ? [{ id: validId(p.id), date: p.date, text: p.text }]
       : []))
   };
-}
-function addMissing<K extends GroupKey>(k: K, incoming: GroupItems[K][]) {
-  const have = new Set(items(k).map(x => x.id));
-  incoming.forEach(x => { if (!have.has(x.id)) items(k).push(x); });
-}
-export function offerLegacyImport() {
-  const skipKey = 'fomo_legacy_skip_' + Sync.uid;
-  let raw = null;
-  try { raw = localStorage.getItem(LEGACY_KEY); if (localStorage.getItem(skipKey)) return; } catch (e) { return; }
-  if (!raw) return;
-  let d;
-  try { d = sanitizeData(JSON.parse(raw)); } catch (e) { return; }
-  const n = d.assessments.length + d.programs.length + d.posts.length;
-  if (!n) return;
-  if (!confirm(`Trên máy này có dữ liệu cũ chưa gắn tài khoản (${d.assessments.length} lần trắc nghiệm, ${d.programs.length} lộ trình). Đưa vào tài khoản này?\n\nChỉ chọn OK nếu đó là dữ liệu của bạn. Chọn Cancel nếu máy dùng chung.`)) {
-    try { localStorage.setItem(skipKey, '1'); } catch (e) { /* bỏ qua */ }
-    return;
-  }
-  GROUPS_KEYS.forEach(k => addMissing(k, d[k]));
-  try { localStorage.removeItem(LEGACY_KEY); } catch (e) { /* bỏ qua */ }
-  save();
-  toast('Đã đưa dữ liệu cũ vào tài khoản.');
 }
