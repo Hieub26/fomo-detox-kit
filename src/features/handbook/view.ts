@@ -1,21 +1,8 @@
-import { $, card } from '../../lib/dom';
+import { CARDS, SITUATIONS } from './config';
+import { CARD_CLS, CARD_COLORS, CARD_ICONS } from './content';
+import { $, card, esc } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
 
-export const CARDS = [
-  ['amber', 'fa-ghost', 'FOMO Là Gì?', '<strong>Fear Of Missing Out (FOMO)</strong> - Nỗi sợ bị bỏ lỡ thông tin, xu hướng hoặc các sự kiện thú vị mà bạn bè đang trải nghiệm. Nó khiến học sinh luôn thôi thúc phải kiểm tra điện thoại từng phút.', 'fa-circle-info', 'Thuật toán MXH liên tục tạo cảm giác gấp gáp để giữ chân bạn lâu nhất có thể!'],
-  ['indigo', 'fa-moon', 'Sát Thủ Giấc Ngủ: Ánh Sáng Xanh', 'Dùng màn hình sát giờ ngủ, nhất là nội dung kích thích như video ngắn, có thể làm chậm tiết hormone <strong>Melatonin</strong> - hormone gây buồn ngủ tự nhiên - và khiến não khó "tắt" để ngủ.', 'fa-triangle-exclamation', 'Trì hoãn giấc ngủ kỹ thuật số khiến bạn ngủ muộn, hay giật mình và mệt mỏi vào sáng hôm sau.'],
-  ['rose', 'fa-graduation-cap', 'Hệ Lụy Đến Kết Quả Học Tập', 'Nhiều nghiên cứu cho thấy thiếu ngủ làm giảm khả năng ghi nhớ và tập trung trong giờ học, khiến tiếp thu bài chậm hơn và có thể ảnh hưởng đến kết quả học tập.', 'fa-arrow-trend-down', 'Giấc ngủ ngon là chìa khóa vàng giúp não bộ ghi nhớ kiến thức bền vững.']
-];
-// Tailwind cần tên lớp đầy đủ, nên liệt kê từng bộ màu.
-export const CARD_CLS: Record<string, string[]> = {
-  amber: ['bg-amber-100 text-amber-600', 'bg-amber-50 text-amber-800 border-amber-200'],
-  indigo: ['bg-indigo-100 text-indigo-600', 'bg-indigo-50 text-indigo-800 border-indigo-200'],
-  rose: ['bg-rose-100 text-rose-600', 'bg-rose-50 text-rose-800 border-rose-200']
-};
-export const SITUATIONS = [
-  ['📱 Tình huống 1: Tiếng thông báo Zalo/Messenger phát ra lúc 22h30', 'Bật dậy cầm điện thoại trả lời tin nhắn ngay vì sợ bạn bè nghĩ mình thờ ơ hoặc bỏ lỡ câu chuyện hot. Kết quả: Lướt thêm 1.5 tiếng.', 'Bật chế độ "Do Not Disturb" (Không làm phiền) tự động từ 21h30.'],
-  ['🎬 Tình huống 2: Thử thách "Chỉ xem 5 phút TikTok nữa thôi"', 'Các video ngắn liên tục vuốt không hồi kết làm não bộ tiết ra Dopamine liên tục. Bạn rơi vào trạng thái "trì hoãn giấc ngủ kỹ thuật số".', 'Đặt giới hạn ứng dụng 20 phút/ngày hoặc sạc điện thoại ở góc phòng thay vì để gần giường.']
-];
 export function render1() {
   $('#module-1').innerHTML = `
     <div class="bg-gradient-to-r from-teal-600 to-indigo-600 rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
@@ -27,19 +14,21 @@ export function render1() {
         <button data-click="switchTab" data-arg="2" class="mt-4 px-5 py-2.5 bg-white text-teal-700 font-semibold text-sm rounded-xl shadow hover:bg-teal-50 transition"><i class="fa-solid fa-clipboard-question mr-1"></i> Làm trắc nghiệm ngay</button>
       </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">${CARDS.map(c => `
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition">
-        <div class="w-12 h-12 ${CARD_CLS[c[0]][0]} rounded-xl flex items-center justify-center text-xl mb-4"><i class="fa-solid ${c[1]}"></i></div>
-        <h3 class="font-bold text-lg text-slate-800 mb-2">${c[2]}</h3>
-        <p class="text-slate-600 text-sm leading-relaxed mb-4">${c[3]}</p>
-        <div class="${CARD_CLS[c[0]][1]} p-3 rounded-xl text-xs border"><i class="fa-solid ${c[4]} mr-1"></i> ${c[5]}</div>
-      </div>`).join('')}</div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">${CARDS.map((c, i) => {
+      const col = CARD_COLORS[i % CARD_COLORS.length];
+      return `<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition">
+        <div class="w-12 h-12 ${CARD_CLS[col][0]} rounded-xl flex items-center justify-center text-xl mb-4"><i class="fa-solid ${CARD_ICONS[i % CARD_ICONS.length]}"></i></div>
+        <h3 class="font-bold text-lg text-slate-800 mb-2">${esc(c.title)}</h3>
+        <p class="text-slate-600 text-sm leading-relaxed mb-4" style="white-space:pre-wrap">${esc(c.body)}</p>
+        <div class="${CARD_CLS[col][1]} p-3 rounded-xl text-xs border"><i class="fa-solid fa-circle-info mr-1"></i> ${esc(c.callout)}</div>
+      </div>`;
+    }).join('')}</div>
     <div class="${card}">
       <h3 class="font-bold text-xl text-slate-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-lightbulb text-teal-500"></i> Các Tình Huống Thực Tế Thường Gặp</h3>
       <div class="space-y-3">${SITUATIONS.map((s, i) => `
         <div class="border border-slate-200 rounded-xl overflow-hidden">
-          <button data-click="toggleAccordion" data-arg="${i}" class="w-full text-left p-4 font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 flex justify-between items-center gap-2"><span>${s[0]}</span><i id="acc-icon-${i}" class="fa-solid fa-chevron-down text-slate-400"></i></button>
-          <div id="acc-content-${i}" class="hidden p-4 bg-white text-sm text-slate-600 border-t border-slate-100"><strong>Phản ứng FOMO:</strong> ${s[1]}<br><span class="text-teal-600 font-medium">💡 Giải pháp Detox:</span> ${s[2]}</div>
+          <button data-click="toggleAccordion" data-arg="${i}" class="w-full text-left p-4 font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 flex justify-between items-center gap-2"><span>${esc(s.title)}</span><i id="acc-icon-${i}" class="fa-solid fa-chevron-down text-slate-400"></i></button>
+          <div id="acc-content-${i}" class="hidden p-4 bg-white text-sm text-slate-600 border-t border-slate-100" style="white-space:pre-wrap"><strong>Phản ứng FOMO:</strong> ${esc(s.reaction)}<br><span class="text-teal-600 font-medium">💡 Giải pháp Detox:</span> ${esc(s.solution)}</div>
         </div>`).join('')}</div>
     </div>`;
 }
