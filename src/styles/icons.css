@@ -21,12 +21,12 @@
 .fa-spin { animation: fa-spin 2s linear infinite; }
 @keyframes fa-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .fa-spin { animation: none; } }
-.fa-arrow-trend-down::before { content: "\e097"; }
 .fa-arrows-rotate::before { content: "\f021"; }
 .fa-award::before { content: "\f559"; }
 .fa-bed::before { content: "\f236"; }
 .fa-bell::before { content: "\f0f3"; }
 .fa-bell-slash::before { content: "\f1f6"; }
+.fa-book::before { content: "\f02d"; }
 .fa-book-open::before { content: "\f518"; }
 .fa-brain::before { content: "\f5dc"; }
 .fa-calculator::before { content: "\f1ec"; }
@@ -67,6 +67,7 @@
 .fa-pause::before { content: "\f04c"; }
 .fa-pen-to-square::before { content: "\f044"; }
 .fa-play::before { content: "\f04b"; }
+.fa-plus::before { content: "\2b"; }
 .fa-right-from-bracket::before { content: "\f2f5"; }
 .fa-rotate-right::before { content: "\f2f9"; }
 .fa-school::before { content: "\f549"; }

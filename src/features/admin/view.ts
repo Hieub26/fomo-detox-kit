@@ -1,5 +1,7 @@
 import type { Assessment, Program, UserRole } from '../../types';
-import { adminDeleteUser, adminResetPassword, adminSaveQuiz, adminSetRole, rotateAdminCode, rotateTeacherCode, setStudentApproval } from './api';
+import { adminDeleteUser, adminResetPassword, adminSaveHandbook, adminSaveQuiz, adminSetRole, rotateAdminCode, rotateTeacherCode, setStudentApproval } from './api';
+import { CARDS, SITUATIONS, setHandbook } from '../handbook/config';
+import type { HandbookCard, Situation } from '../handbook/content';
 import { pct, progressBar } from '../program/progress';
 import { compareHtml, lineChart } from '../progress/charts';
 import { QUIZ, setQuiz } from '../quiz/config';
@@ -25,6 +27,7 @@ const A = {
   tempPass: null as { id: string; value: string } | null,
   codes: {} as { teacher?: string; admin?: string },
   quizDraft: null as QuizItem[] | null, quizOpen: false, // giữ phần đang sửa khi trang quản trị vẽ lại
+  hb: null as { cards: HandbookCard[]; situations: Situation[] } | null, hbOpen: false, // bản nháp Cẩm Nang
   error: ''
 };
 
@@ -54,6 +57,7 @@ export async function loadAdminData() {
 
 export function renderAdmin() {
   keepQuizDraft();
+  keepHandbookDraft();
   const box = $('#module-8');
   box.innerHTML = '<p class="text-center text-slate-500 py-16"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang tải dữ liệu toàn trường...</p>';
   loadAdminData().then(() => { A.error = ''; drawAdmin(); }).catch(e => {
@@ -72,6 +76,7 @@ const smallBtn = 'px-2.5 py-1 border border-slate-200 rounded-lg text-xs hover:b
 export function drawAdmin() {
   if (tab !== 8) return;
   keepQuizDraft();
+  keepHandbookDraft();
   const students = enrolled(), teachers = byRole('teacher'), pending = A.accounts.filter(isPending).length;
   const done = students.filter(s => (A.assess[s.id] || []).length);
   const high = done.filter(s => levelIdx(latest(A.assess[s.id])!.score) === 2).length;
@@ -115,6 +120,7 @@ export function drawAdmin() {
       <div id="adminUsers">${usersHtml()}</div>
     </div>
     ${quizCard()}
+    ${handbookCard()}
     ${codesCard()}`;
 }
 
@@ -285,6 +291,83 @@ async function saveQuiz() {
   renderAdmin();
 }
 
+function handbookCard() {
+  const hb = A.hb || { cards: CARDS, situations: SITUATIONS };
+  const cls = 'border border-slate-200 rounded-lg px-2 py-1.5 text-sm w-full';
+  const cardsHtml = hb.cards.map((c, i) => `<div data-hb-card class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+    <div class="flex justify-between items-center mb-2"><span class="text-sm font-semibold text-slate-800">Thẻ ${i + 1}</span>
+      <button data-click="hbDelCard" data-arg="${i}" class="${smallBtn} text-rose-700"><i class="fa-solid fa-trash-can"></i></button></div>
+    <input data-hb-title maxlength="120" value="${esc(c.title)}" placeholder="Tiêu đề" aria-label="Thẻ ${i + 1} tiêu đề" class="${cls} font-semibold mb-2">
+    <textarea data-hb-body rows="3" maxlength="1000" placeholder="Nội dung" aria-label="Thẻ ${i + 1} nội dung" class="${cls} mb-2">${esc(c.body)}</textarea>
+    <input data-hb-callout maxlength="300" value="${esc(c.callout)}" placeholder="Ghi chú nổi bật" aria-label="Thẻ ${i + 1} ghi chú" class="${cls}"></div>`).join('');
+  const sitsHtml = hb.situations.map((s, i) => `<div data-hb-sit class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+    <div class="flex justify-between items-center mb-2"><span class="text-sm font-semibold text-slate-800">Tình huống ${i + 1}</span>
+      <button data-click="hbDelSit" data-arg="${i}" class="${smallBtn} text-rose-700"><i class="fa-solid fa-trash-can"></i></button></div>
+    <input data-hb-stitle maxlength="160" value="${esc(s.title)}" placeholder="Tình huống" aria-label="Tình huống ${i + 1}" class="${cls} font-semibold mb-2">
+    <textarea data-hb-reaction rows="2" maxlength="1000" placeholder="Phản ứng FOMO" aria-label="Tình huống ${i + 1} phản ứng" class="${cls} mb-2">${esc(s.reaction)}</textarea>
+    <textarea data-hb-solution rows="2" maxlength="1000" placeholder="Giải pháp Detox" aria-label="Tình huống ${i + 1} giải pháp" class="${cls}">${esc(s.solution)}</textarea></div>`).join('');
+  return `<div class="${card}"><details id="hbEditor" ${A.hbOpen ? 'open' : ''}>
+    <summary class="font-bold text-lg text-slate-800 cursor-pointer"><i class="fa-solid fa-book text-teal-600 mr-1"></i> Sửa Cẩm Nang Số</summary>
+    <p class="text-xs text-slate-500 mt-1 mb-4">Thêm, sửa, xóa thẻ kiến thức và tình huống. Văn bản thuần, không dùng mã HTML. Tối đa 20 thẻ và 20 tình huống.</p>
+    <h4 class="font-semibold text-sm text-slate-700 mb-2">Thẻ kiến thức</h4>
+    <div class="space-y-3">${cardsHtml}</div>
+    <button data-click="hbAddCard" class="${smallBtn} mt-2"><i class="fa-solid fa-plus mr-1"></i> Thêm thẻ</button>
+    <h4 class="font-semibold text-sm text-slate-700 mt-5 mb-2">Tình huống thực tế</h4>
+    <div class="space-y-3">${sitsHtml}</div>
+    <button data-click="hbAddSit" class="${smallBtn} mt-2"><i class="fa-solid fa-plus mr-1"></i> Thêm tình huống</button>
+    <div class="mt-4"><button data-click="adminSaveHandbook" class="${bt} bg-teal-600 hover:bg-teal-700"><i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Cẩm Nang</button></div>
+  </details></div>`;
+}
+function readHandbookForm(): { cards: HandbookCard[]; situations: Situation[] } {
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-hb-card]')].map(b => ({
+    title: b.querySelector<HTMLInputElement>('[data-hb-title]')!.value.trim(),
+    body: b.querySelector<HTMLTextAreaElement>('[data-hb-body]')!.value.trim(),
+    callout: b.querySelector<HTMLInputElement>('[data-hb-callout]')!.value.trim()
+  }));
+  const situations = [...document.querySelectorAll<HTMLElement>('[data-hb-sit]')].map(b => ({
+    title: b.querySelector<HTMLInputElement>('[data-hb-stitle]')!.value.trim(),
+    reaction: b.querySelector<HTMLTextAreaElement>('[data-hb-reaction]')!.value.trim(),
+    solution: b.querySelector<HTMLTextAreaElement>('[data-hb-solution]')!.value.trim()
+  }));
+  return { cards, situations };
+}
+// Giữ phần đang sửa khi trang quản trị vẽ lại, chỉ khi khác nội dung đang dùng.
+// Bỏ qua một lần khi thêm/xóa đã cập nhật A.hb (lúc đó DOM còn cũ, đọc lại sẽ ghi đè mất).
+let skipHbCapture = false;
+function keepHandbookDraft() {
+  const form = document.querySelector<HTMLDetailsElement>('#hbEditor');
+  if (!form) return;
+  A.hbOpen = form.open;
+  if (skipHbCapture) return;
+  const draft = readHandbookForm();
+  A.hb = JSON.stringify(draft) === JSON.stringify({ cards: CARDS, situations: SITUATIONS }) ? null : draft;
+}
+// Vẽ lại trang quản trị sau khi thay đổi A.hb trực tiếp, không đọc lại DOM cũ.
+function redrawAfterHb() { skipHbCapture = true; drawAdmin(); skipHbCapture = false; }
+// Bảo đảm có bản nháp (sao chép từ nội dung đang dùng), giữ phần đang gõ trước khi thêm/xóa.
+function ensureHb() {
+  keepHandbookDraft();
+  if (!A.hb) A.hb = { cards: CARDS.map(c => ({ ...c })), situations: SITUATIONS.map(s => ({ ...s })) };
+  return A.hb;
+}
+
+async function saveHandbook() {
+  const hb = readHandbookForm();
+  if (!hb.cards.length || !hb.situations.length) { toast('Cần ít nhất một thẻ kiến thức và một tình huống.'); return; }
+  const emptyCard = hb.cards.findIndex(c => !c.title || !c.body || !c.callout);
+  if (emptyCard >= 0) { toast(`Thẻ ${emptyCard + 1} còn thiếu nội dung.`); return; }
+  const emptySit = hb.situations.findIndex(s => !s.title || !s.reaction || !s.solution);
+  if (emptySit >= 0) { toast(`Tình huống ${emptySit + 1} còn thiếu nội dung.`); return; }
+  if (JSON.stringify(hb) === JSON.stringify({ cards: CARDS, situations: SITUATIONS })) { toast('Chưa có thay đổi nào.'); return; }
+  if (!confirm('Lưu Cẩm Nang mới? Học sinh sẽ thấy ngay từ lần mở app tiếp theo.')) return;
+  try { await adminSaveHandbook(hb.cards, hb.situations); } catch (e) { failed(e, 'Không lưu được Cẩm Nang.'); return; }
+  setHandbook(hb.cards, hb.situations);
+  A.hb = null;
+  toast('Đã lưu Cẩm Nang.');
+  $('#module-8').innerHTML = '';
+  renderAdmin();
+}
+
 function codesCard() {
   const shown = (code: string | undefined, who: string) => (code
     ? `<div class="mt-2 text-sm rounded-xl px-3 py-2 bg-amber-50 text-amber-900 border border-amber-200">Mã mới: <code class="font-bold select-all">${esc(code)}</code>. Chỉ đưa cho ${who}. Mã chỉ hiện một lần; mã cũ đã hết hiệu lực.</div>`
@@ -421,6 +504,11 @@ registerActions({
   adminAddClass: ({ el, arg }) => addClass(el, arg),
   adminRemoveClass: ({ el, arg }) => removeClass(arg, el.dataset.cls ?? ''),
   adminSaveQuiz: () => saveQuiz(),
+  adminSaveHandbook: () => saveHandbook(),
+  hbAddCard: () => { const hb = ensureHb(); hb.cards.push({ title: '', body: '', callout: '' }); A.hbOpen = true; redrawAfterHb(); },
+  hbDelCard: ({ arg }) => { const hb = ensureHb(); hb.cards.splice(+arg, 1); A.hbOpen = true; redrawAfterHb(); },
+  hbAddSit: () => { const hb = ensureHb(); hb.situations.push({ title: '', reaction: '', solution: '' }); A.hbOpen = true; redrawAfterHb(); },
+  hbDelSit: ({ arg }) => { const hb = ensureHb(); hb.situations.splice(+arg, 1); A.hbOpen = true; redrawAfterHb(); },
   adminRotateTeacherCode: () => rotate('teacher'),
   adminRotateAdminCode: () => rotate('admin'),
   adminExportCsv: () => exportCsv(),
