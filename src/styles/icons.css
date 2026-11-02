@@ -45,6 +45,7 @@
 .fa-crown::before { content: "\f521"; }
 .fa-database::before { content: "\f1c0"; }
 .fa-file-export::before { content: "\f56e"; }
+.fa-file-signature::before { content: "\f573"; }
 .fa-flag-checkered::before { content: "\f11e"; }
 .fa-floppy-disk::before { content: "\f0c7"; }
 .fa-ghost::before { content: "\f6e2"; }
@@ -68,11 +69,13 @@
 .fa-school::before { content: "\f549"; }
 .fa-shield-halved::before { content: "\f3ed"; }
 .fa-spinner::before { content: "\f110"; }
+.fa-stethoscope::before { content: "\f0f1"; }
 .fa-stop::before { content: "\f04d"; }
 .fa-trash-can::before { content: "\f2ed"; }
 .fa-triangle-exclamation::before { content: "\f071"; }
 .fa-user-gear::before { content: "\f4fe"; }
 .fa-user-graduate::before { content: "\f501"; }
+.fa-user-lock::before { content: "\f502"; }
 .fa-user-ninja::before { content: "\f504"; }
 .fa-user-secret::before { content: "\f21b"; }
 .fa-user-shield::before { content: "\f505"; }

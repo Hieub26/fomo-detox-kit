@@ -1,3 +1,4 @@
+import { landingHtml, startReveal } from './landing';
 import { enterApp } from './session';
 import { $, esc, toast } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
@@ -30,14 +31,15 @@ export function authError(error: unknown) {
 export function renderAuth(message?: string) {
   $('#appShell').classList.add('hidden');
   const box = $('#authScreen');
-  box.classList.remove('hidden');
+  const FRAME = 'min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-teal-700 via-teal-600 to-indigo-700';
+  box.className = isConfigured ? 'min-h-screen' : FRAME;
   if (!isConfigured) {
     box.innerHTML = authFrame(`<h2 class="text-lg font-bold text-slate-800 mb-2">Chưa cấu hình máy chủ</h2>
       <p class="text-sm text-slate-600">Hãy điền <code>VITE_SUPABASE_URL</code>, <code>VITE_SUPABASE_ANON_KEY</code> và <code>VITE_USERNAME_EMAIL_DOMAIN</code> trong <code>.env.local</code>.</p>`);
     return;
   }
   const signup = authMode === 'signup';
-  box.innerHTML = authFrame(`
+  box.innerHTML = landingHtml(`
     <div class="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-xl mb-5" role="tablist">
       ${[['login', 'Đăng nhập'], ['signup', 'Đăng ký']].map(m => `<button type="button" role="tab" aria-selected="${authMode === m[0]}" data-click="setAuthMode" data-arg="${m[0]}" class="py-2 rounded-lg text-sm font-semibold transition ${authMode === m[0] ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500'}">${m[1]}</button>`).join('')}
     </div>
@@ -58,6 +60,8 @@ export function renderAuth(message?: string) {
     <p class="text-xs text-slate-500 mt-4 text-center">${signup
       ? 'Điểm trắc nghiệm và tiến độ lộ trình sẽ lưu trong tài khoản; giáo viên của lớp và quản trị viên nhà trường xem được. Giáo viên sẽ xác nhận bạn vào lớp. Không dùng tên đăng nhập có thông tin riêng tư.'
       : 'Quên mật khẩu? Học sinh nhờ giáo viên của lớp, giáo viên nhờ quản trị viên đặt lại giúp.'}</p>`);
+  startReveal(box);
+  if (message) $('#authCard').scrollIntoView();
   $('#authForm').addEventListener('submit', submitAuth);
 }
 export function authFrame(inner: string) {
