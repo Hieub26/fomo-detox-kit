@@ -36,9 +36,6 @@ export function render6() {
           <label class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer"><input type="checkbox" data-change="togglePasswordView" class="accent-teal-600"> Hiện mật khẩu</label>
           <button class="${bt} bg-amber-600 hover:bg-amber-700">Đổi mật khẩu</button></div>
       </form>
-      ${teacher || admin ? '' : `<h3 class="font-bold text-lg mt-6 mb-1"><i class="fa-solid fa-chalkboard-user text-indigo-600 mr-1"></i> Tài khoản giáo viên</h3>
-      <p class="text-xs text-slate-500 mb-2">Chỉ dành cho giáo viên có mã do nhà trường cấp.</p>
-      <div class="flex gap-2"><input id="pcode" autocomplete="off" spellcheck="false" aria-label="Mã giáo viên" placeholder="Mã giáo viên" class="${inp}"><button data-click="claimTeacher" class="${bt} bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap">Xác nhận</button></div>`}
       ${!teacher ? '' : `<details class="mt-6"><summary class="text-xs text-slate-500 cursor-pointer">Tài khoản quản trị</summary>
       <p class="text-xs text-slate-500 my-2">Chỉ dành cho giáo viên được nhà trường giao quản trị hệ thống.</p>
       <div class="flex gap-2"><input id="padmin" autocomplete="off" spellcheck="false" aria-label="Mã quản trị" placeholder="Mã quản trị" class="${inp}"><button data-click="claimAdmin" class="${bt} bg-slate-700 hover:bg-slate-800 whitespace-nowrap">Xác nhận</button></div></details>`}
@@ -67,15 +64,6 @@ export async function changePassword() {
   if (error) { toast(error.code === 'same_password' ? 'Mật khẩu mới phải khác mật khẩu cũ.' : authError(error)); return; }
   el.value = ''; el2.value = ''; toast('Đã đổi mật khẩu.');
 }
-export async function claimTeacher() {
-  const code = $('#pcode').value.trim();
-  if (!code) return;
-  const { data, error } = await sb.rpc('claim_teacher', { code });
-  if (error || !data) { toast('Mã giáo viên không đúng.'); return; }
-  await Sync.pull();
-  toast('Tài khoản đã chuyển thành giáo viên.');
-  show(7);
-}
 export async function claimAdmin() {
   const code = $('#padmin').value.trim();
   if (!code) return;
@@ -96,7 +84,6 @@ registerActions({
   changePassword: () => changePassword(),
   togglePasswordView: ({ el }) => { ['#pnew', '#pnew2'].forEach(id => { $(id).type = el.checked ? 'text' : 'password'; }); },
   claimAdmin: () => claimAdmin(),
-  claimTeacher: () => claimTeacher(),
   saveProfile: () => saveProfile(),
   wipe: () => wipe(),
 });
