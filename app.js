@@ -1,7 +1,5 @@
 'use strict';
-/* FOMO DETOX KIT – giao diện theo bản gốc, dữ liệu lưu trong localStorage của thiết bị. */
-
-const KEY = 'fomo_detox_kit_v2';
+/* FOMO DETOX KIT – giao diện theo bản gốc. Dữ liệu lưu theo tài khoản, xem Sync trong auth.js. */
 
 /* ======================= NỘI DUNG ======================= */
 const Q = [
@@ -90,19 +88,12 @@ const REMIND_H = 21, REMIND_M = 30;
 /* ======================= DỮ LIỆU ======================= */
 function blank() {
   return {
-    profile: { code: 'HS-' + Math.random().toString(36).slice(2, 6).toUpperCase(), name: '', cls: '' },
+    profile: { code: '', name: '', cls: '', role: 'student' },
     assessments: [], programs: [], posts: [], audio: [], reminder: false
   };
 }
-function load() {
-  try { const r = localStorage.getItem(KEY); if (r) return Object.assign(blank(), JSON.parse(r)); } catch (e) { /* dùng dữ liệu rỗng */ }
-  return blank();
-}
-let S = load();
-function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(S)); }
-  catch (e) { toast('Không lưu được dữ liệu trên trình duyệt. Hãy tải bản sao lưu.'); }
-}
+let S = blank();
+function save() { Sync.changed(); }
 
 /* ======================= TIỆN ÍCH ======================= */
 const $ = s => document.querySelector(s);
@@ -122,7 +113,11 @@ function download(name, text, type) {
   a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
-const csvCell = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+// Tên học sinh do người dùng nhập: thêm ' để Excel không chạy nội dung bắt đầu bằng = + - @ như công thức.
+const csvCell = v => {
+  const t = String(v == null ? '' : v);
+  return '"' + (typeof v === 'string' && /^[=+\-@\t\r]/.test(t) ? "'" + t : t).replace(/"/g, '""') + '"';
+};
 const toCsv = rows => '﻿' + rows.map(r => r.map(csvCell).join(',')).join('\r\n');
 const card = 'bg-white rounded-2xl p-6 shadow-sm border border-slate-100';
 
@@ -197,15 +192,17 @@ const TABS = [
   [1, 'fa-book-open', '1. Cẩm Nang Số', 'Cẩm nang'], [2, 'fa-clipboard-question', '2. Trắc Nghiệm FOMO', 'Trắc nghiệm'], [3, 'fa-calendar-check', '3. Lộ Trình Detox', 'Lộ trình'],
   [4, 'fa-headphones', '4. Âm Thanh Sóng Não', 'Âm thanh'], [5, 'fa-chart-line', '5. Góc Chia Sẻ & Badge', 'Chia sẻ']
 ];
-let tab = 1, postFor = null, planPick = null, retake = false;
+const TEACHER_TAB = [7, 'fa-chalkboard-user', '6. Lớp Của Tôi', 'Lớp'];
+const visibleTabs = () => (S.profile.role === 'teacher' ? TABS.concat([TEACHER_TAB]) : TABS);
+let tab = 1, postFor = null, planPick = null, retake = false, appReady = false;
 function switchTab(n) {
   if (location.hash === '#' + n) show(n); else location.hash = '#' + n;
 }
 function show(n) {
   tab = n;
-  for (let i = 1; i <= 6; i++) $('#module-' + i).classList.toggle('hidden', i !== n);
-  $('#navTabs').innerHTML = TABS.map(t => `<button onclick="switchTab(${t[0]})" class="flex items-center gap-2 px-3.5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${t[0] === n ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}"><i class="fa-solid ${t[1]} text-base"></i> <span>${t[2]}</span></button>`).join('');
-  $('#bottomNav').innerHTML = TABS.map(t => `<button onclick="switchTab(${t[0]})" aria-current="${t[0] === n}" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium ${t[0] === n ? 'text-teal-700' : 'text-slate-500'}"><i class="fa-solid ${t[1]} text-lg ${t[0] === n ? 'bg-teal-100 rounded-full px-3 py-1' : 'py-1'}"></i><span>${t[3]}</span></button>`).join('');
+  for (let i = 1; i <= 7; i++) $('#module-' + i).classList.toggle('hidden', i !== n);
+  $('#navTabs').innerHTML = visibleTabs().map(t => `<button onclick="switchTab(${t[0]})" class="flex items-center gap-2 px-3.5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${t[0] === n ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}"><i class="fa-solid ${t[1]} text-base"></i> <span>${t[2]}</span></button>`).join('');
+  $('#bottomNav').innerHTML = visibleTabs().map(t => `<button onclick="switchTab(${t[0]})" aria-current="${t[0] === n}" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium ${t[0] === n ? 'text-teal-700' : 'text-slate-500'}"><i class="fa-solid ${t[1]} text-lg ${t[0] === n ? 'bg-teal-100 rounded-full px-3 py-1' : 'py-1'}"></i><span>${t[3]}</span></button>`).join('');
   RENDER[n]();
   window.scrollTo(0, 0);
 }
@@ -331,7 +328,7 @@ function showResult(box, a) {
       <div class="flex items-center justify-between flex-wrap gap-2"><h3 class="text-xl font-bold ${C.title}">${L.title}</h3><span class="px-3 py-1 rounded-full text-xs font-bold text-white ${C.badge}">Điểm: ${a.score}/${MAXSCORE}</span></div>
       <p class="text-sm mt-2 leading-relaxed text-slate-700">${L.desc}</p>
       ${pre ? `<div class="mt-4 p-3 bg-white/70 rounded-xl border border-slate-200"><h4 class="font-bold text-sm mb-1">So sánh với trước lộ trình</h4>${compareHtml(pre, a)}</div>` : ''}
-      <p class="text-xs text-slate-500 mt-3"><i class="fa-solid fa-floppy-disk mr-1"></i> Kết quả ngày ${fmtDate(a.date)} đã được lưu trong lịch sử trên thiết bị này.</p>
+      <p class="text-xs text-slate-500 mt-3"><i class="fa-solid fa-floppy-disk mr-1"></i> Kết quả ngày ${fmtDate(a.date)} đã được lưu trong tài khoản của bạn.</p>
       <div class="mt-4 pt-4 border-t border-slate-200/60 flex flex-wrap gap-3">${actions}</div>
     </div></div>`;
 }
@@ -502,7 +499,7 @@ function selectSound(key) {
 function stopSound(silent) {
   if (!AU.key) return;
   const sec = Math.round((Date.now() - AU.startedAt) / 1000);
-  if (sec >= 30) { S.audio.push({ date: new Date().toISOString(), sound: AU.key, seconds: sec }); save(); }
+  if (sec >= 30) { S.audio.push({ id: uid(), date: new Date().toISOString(), sound: AU.key, seconds: Math.min(sec, 86400) }); save(); }
   const ctx = AU.ctx, nodes = AU.nodes, m = AU.master;
   try { m.gain.cancelScheduledValues(ctx.currentTime); m.gain.setValueAtTime(m.gain.value, ctx.currentTime); m.gain.linearRampToValueAtTime(0, ctx.currentTime + .4); } catch (e) { /* bỏ qua */ }
   setTimeout(() => { nodes.forEach(n => { try { n.stop(); } catch (e) { /* bỏ qua */ } }); try { m.disconnect(); } catch (e) { /* bỏ qua */ } }, 500);
@@ -623,10 +620,10 @@ function render5() {
   ${progressCard()}
   <div class="${card}">
     <h3 class="font-bold text-xl text-slate-800 mb-1">Góc Chia Sẻ Ẩn Danh (Confession)</h3>
-    <p class="text-xs text-slate-500 mb-6">Nơi học sinh THCS Nguyễn Tất Thành trải lòng về áp lực FOMO &amp; lan tỏa động lực Detox. Bài viết chỉ lưu trên thiết bị này và không nằm trong file nộp giáo viên.</p>
+    <p class="text-xs text-slate-500 mb-6">Nơi học sinh THCS Nguyễn Tất Thành trải lòng về áp lực FOMO &amp; lan tỏa động lực Detox. Chỉ bạn đọc được bài của mình: bài lưu trong tài khoản của bạn, giáo viên không xem được trong app và bài không nằm trong file nộp.</p>
     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
       <textarea id="confessionInput" rows="3" maxlength="1500" class="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Viết chia sẻ hoặc trải nghiệm của bạn tại đây... (Hệ thống tự động ẩn danh)"></textarea>
-      <div class="flex justify-between items-center mt-3"><span class="text-xs text-slate-400"><i class="fa-solid fa-user-secret mr-1"></i> Luôn bảo mật danh tính</span>
+      <div class="flex justify-between items-center mt-3"><span class="text-xs text-slate-400"><i class="fa-solid fa-user-secret mr-1"></i> Không hiển thị tên của bạn</span>
         <button onclick="postConfession()" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-lg shadow-sm transition"><i class="fa-solid fa-paper-plane mr-1"></i> Gửi Chia Sẻ</button></div></div>
     <div class="space-y-4">${S.posts.slice().reverse().map(p => `
       <div class="p-4 rounded-xl border border-teal-100 bg-teal-50/40"><div class="flex justify-between items-center mb-2">
@@ -664,44 +661,77 @@ function assessRows() {
 const inp = 'w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500';
 const bt = 'px-4 py-2 text-white text-sm font-semibold rounded-lg transition';
 function render6() {
+  const teacher = S.profile.role === 'teacher';
   $('#module-6').innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="${card}"><h3 class="font-bold text-lg mb-3"><i class="fa-solid fa-id-card text-teal-600 mr-1"></i> Hồ sơ</h3>
-      <label class="block text-xs font-semibold text-slate-600 mb-1">Mã học sinh</label><input id="pcode" class="${inp} mb-3" value="${esc(S.profile.code)}">
-      <label class="block text-xs font-semibold text-slate-600 mb-1">Họ tên (không bắt buộc)</label><input id="pname" class="${inp} mb-3" value="${esc(S.profile.name)}">
-      <label class="block text-xs font-semibold text-slate-600 mb-1">Lớp</label><input id="pcls" class="${inp} mb-3" value="${esc(S.profile.cls)}">
-      <button onclick="saveProfile()" class="${bt} bg-teal-600 hover:bg-teal-700">Lưu hồ sơ</button></div>
-    <div class="${card}"><h3 class="font-bold text-lg mb-1"><i class="fa-solid fa-file-export text-indigo-600 mr-1"></i> Nộp kết quả cho giáo viên</h3>
+      <label class="block text-xs font-semibold text-slate-600 mb-1">Tên đăng nhập</label><input class="${inp} mb-3 bg-slate-50 text-slate-500" value="${esc(S.profile.code)}" disabled>
+      <label class="block text-xs font-semibold text-slate-600 mb-1" for="pname">Họ tên</label><input id="pname" maxlength="100" class="${inp} mb-3" value="${esc(S.profile.name)}">
+      ${teacher ? '' : `<label class="block text-xs font-semibold text-slate-600 mb-1" for="pcls">Lớp</label><input id="pcls" maxlength="20" class="${inp} mb-3" value="${esc(S.profile.cls)}">`}
+      <div class="flex gap-2 flex-wrap"><button onclick="saveProfile()" class="${bt} bg-teal-600 hover:bg-teal-700">Lưu hồ sơ</button>
+        <button onclick="logout()" class="${bt} bg-slate-700 hover:bg-slate-800"><i class="fa-solid fa-right-from-bracket mr-1"></i> Đăng xuất</button></div>
+      <h3 class="font-bold text-lg mt-6 mb-3"><i class="fa-solid fa-key text-amber-600 mr-1"></i> Đổi mật khẩu</h3>
+      <label class="block text-xs font-semibold text-slate-600 mb-1" for="pnew">Mật khẩu mới (ít nhất 8 ký tự)</label><input id="pnew" type="password" autocomplete="new-password" maxlength="72" class="${inp} mb-3">
+      <button onclick="changePassword()" class="${bt} bg-amber-600 hover:bg-amber-700">Đổi mật khẩu</button>
+      ${teacher ? '' : `<h3 class="font-bold text-lg mt-6 mb-1"><i class="fa-solid fa-chalkboard-user text-indigo-600 mr-1"></i> Tài khoản giáo viên</h3>
+      <p class="text-xs text-slate-500 mb-2">Chỉ dành cho giáo viên có mã do nhà trường cấp.</p>
+      <div class="flex gap-2"><input id="pcode" autocomplete="off" spellcheck="false" aria-label="Mã giáo viên" placeholder="Mã giáo viên" class="${inp}"><button onclick="claimTeacher()" class="${bt} bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap">Xác nhận</button></div>`}
+    </div>
+    <div class="${card}"><h3 class="font-bold text-lg mb-1"><i class="fa-solid fa-file-export text-indigo-600 mr-1"></i> Xuất kết quả</h3>
       <p class="text-xs text-slate-500 mb-3">File gồm điểm trắc nghiệm và tiến độ lộ trình. Không gồm Góc Ẩn Danh.</p>
       <div class="flex gap-2 flex-wrap"><button onclick="exportCsv()" class="${bt} bg-indigo-600 hover:bg-indigo-700">Xuất CSV</button><button onclick="exportJson()" class="${bt} bg-indigo-600 hover:bg-indigo-700">Xuất JSON</button></div>
       <h3 class="font-bold text-lg mt-6 mb-1"><i class="fa-solid fa-database text-amber-600 mr-1"></i> Sao lưu &amp; khôi phục</h3>
-      <p class="text-xs text-slate-500 mb-3">Dữ liệu nằm trên thiết bị này. Xóa dữ liệu trình duyệt hoặc đổi máy sẽ mất, nên hãy sao lưu định kỳ.</p>
+      <p class="text-xs text-slate-500 mb-3">Dữ liệu lưu trong tài khoản và theo bạn sang thiết bị khác. Bản sao lưu là file riêng phòng khi cần.</p>
       <div class="flex gap-2 flex-wrap items-center"><button onclick="backup()" class="${bt} bg-amber-600 hover:bg-amber-700">Tải bản sao lưu</button>
         <label class="${bt} bg-slate-700 hover:bg-slate-800 cursor-pointer">Khôi phục<input type="file" accept=".json" hidden onchange="restore(this.files[0])"></label>
         <button onclick="wipe()" class="${bt} bg-rose-600 hover:bg-rose-700">Xóa toàn bộ dữ liệu</button></div></div>
-    <div class="${card} lg:col-span-2"><h3 class="font-bold text-lg mb-1"><i class="fa-solid fa-chalkboard-user text-teal-600 mr-1"></i> Dành cho giáo viên</h3>
-      <p class="text-xs text-slate-500 mb-3">Chọn nhiều file JSON do học sinh nộp để xem tổng hợp lớp. Dữ liệu chỉ xử lý trên máy này, không gửi đi đâu.</p>
-      <input type="file" accept=".json" multiple onchange="teacherImport(this.files)" class="text-sm"><div id="tout" class="mt-4"></div></div>
+    ${teacher ? `<div class="${card} lg:col-span-2"><h3 class="font-bold text-lg mb-1"><i class="fa-solid fa-chalkboard-user text-teal-600 mr-1"></i> Tổng hợp từ file</h3>
+      <p class="text-xs text-slate-500 mb-3">Chọn nhiều file JSON do học sinh nộp để xem tổng hợp. Dữ liệu chỉ xử lý trên máy này, không gửi đi đâu.</p>
+      <input type="file" accept=".json" multiple onchange="teacherImport(this.files)" class="text-sm"><div id="tout" class="mt-4"></div></div>` : ''}
   </div>`;
 }
-function saveProfile() {
-  S.profile.code = $('#pcode').value.trim() || S.profile.code; S.profile.name = $('#pname').value.trim(); S.profile.cls = $('#pcls').value.trim();
-  save(); toast('Đã lưu hồ sơ.');
+async function saveProfile() {
+  const name = $('#pname').value.trim(), clsEl = $('#pcls');
+  const patch = { full_name: name };
+  if (clsEl) patch.class_name = clsEl.value;
+  const { error } = await sb.from('profiles').update(patch).eq('id', Sync.uid);
+  if (error) { console.error(error); toast('Không lưu được hồ sơ. Hãy kiểm tra mạng rồi thử lại.'); return; }
+  await Sync.pull(); // lấy lại tên lớp đã chuẩn hóa từ máy chủ
+  render6(); toast('Đã lưu hồ sơ.');
+}
+async function changePassword() {
+  const el = $('#pnew'), password = el.value;
+  if (password.length < 8) { toast('Mật khẩu cần ít nhất 8 ký tự.'); return; }
+  const { error } = await sb.auth.updateUser({ password });
+  if (error) { toast(error.code === 'same_password' ? 'Mật khẩu mới phải khác mật khẩu cũ.' : authError(error)); return; }
+  el.value = ''; toast('Đã đổi mật khẩu.');
+}
+async function claimTeacher() {
+  const code = $('#pcode').value.trim();
+  if (!code) return;
+  const { data, error } = await sb.rpc('claim_teacher', { code });
+  if (error || !data) { toast('Mã giáo viên không đúng.'); return; }
+  await Sync.pull();
+  toast('Tài khoản đã chuyển thành giáo viên.');
+  show(7);
 }
 const exportCsv = () => download(`fomo-${S.profile.code}.csv`, toCsv(assessRows()), 'text/csv');
 const exportJson = () => download(`fomo-${S.profile.code}.json`, JSON.stringify(teacherPayload(), null, 1));
 const backup = () => download(`fomo-sao-luu-${today()}.json`, JSON.stringify(S, null, 1));
 function wipe() {
-  if (!confirm('Xóa toàn bộ dữ liệu trên thiết bị? Không thể hoàn tác.')) return;
+  if (!confirm('Xóa toàn bộ dữ liệu trong tài khoản, trên mọi thiết bị? Không thể hoàn tác.')) return;
   if (!confirm('Chắc chắn xóa? Hãy tải bản sao lưu trước nếu cần.')) return;
-  S = blank(); save(); toast('Đã xóa dữ liệu.'); render6();
+  const { profile, reminder } = S;
+  S = Object.assign(blank(), { profile, reminder });
+  save(); toast('Đã xóa dữ liệu.'); render6();
 }
 function restore(f) {
   if (!f) return;
   f.text().then(t => {
     const d = JSON.parse(t);
-    if (!d || !Array.isArray(d.assessments) || !d.profile) throw new Error('bad');
-    if (!confirm('Khôi phục sẽ thay thế dữ liệu hiện tại. Tiếp tục?')) return;
-    S = Object.assign(blank(), d); save(); toast('Đã khôi phục.'); render6();
+    if (!d || !Array.isArray(d.assessments)) throw new Error('bad');
+    if (!confirm('Khôi phục sẽ thay thế dữ liệu hiện tại trong tài khoản. Tiếp tục?')) return;
+    S = Object.assign(blank(), { profile: S.profile, reminder: S.reminder }, sanitizeData(d));
+    save(); toast('Đã khôi phục.'); render6();
   }).catch(() => toast('File sao lưu không hợp lệ.'));
 }
 function teacherImport(files) {
@@ -728,9 +758,11 @@ function teacherImport(files) {
 
 /* ======================= KHỞI ĐỘNG ======================= */
 const RENDER = { 1: render1, 2: render2, 3: render3, 4: render4, 5: render5, 6: render6 };
-window.addEventListener('hashchange', () => { const n = parseInt(location.hash.slice(1)); show(n >= 1 && n <= 6 ? n : 1); });
-{
+function routeFromHash() {
   const n = parseInt(location.hash.slice(1));
-  show(n >= 1 && n <= 6 ? n : 1);
+  if (n === 7 && S.profile.role === 'teacher') return 7;
+  return n >= 1 && n <= 6 ? n : 1;
 }
+function bootApp() { appReady = true; show(routeFromHash()); }
+window.addEventListener('hashchange', () => { if (appReady) show(routeFromHash()); });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
