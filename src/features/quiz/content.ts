@@ -26,8 +26,17 @@ export const COLOR: Record<string, Record<string, string>> = {
 export const LEVELS = [
   { short: 'Nhẹ', max: 18, color: 'emerald', days: 7, icon: 'fa-shield-halved', title: 'Mức Độ Nhẹ: Kiểm Soát Tốt',
     desc: 'Chúc mừng! Bạn duy trì thói quen công nghệ rất lành mạnh. Cảm giác FOMO thấp và chất lượng giấc ngủ được bảo vệ tốt.' },
-  { short: 'Trung bình', max: 28, color: 'amber', days: 14, icon: 'fa-triangle-exclamation', title: 'Mức Độ Trung Bình: Cảnh Báo Phụ Thuộc',
-    desc: 'Cảnh báo! Bạn đang có dấu hiệu bị ảnh hưởng bởi hội chứng FOMO. Việc lướt điện thoại ban đêm bắt đầu làm giảm chất lượng giấc ngủ và sự tập trung học tập.' },
-  { short: 'Cao', max: 40, color: 'rose', days: 21, icon: 'fa-bell-concierge', title: 'Mức Độ Cao: Báo Động Nghiêm Trọng',
-    desc: 'BÁO ĐỘNG! Bạn đang gặp phải hội chứng FOMO nghiêm trọng và rối loạn giấc ngủ kỹ thuật số. Cần can thiệp ngay để tránh sa sút học tập và ảnh hưởng sức khỏe tâm thần.' }
+  { short: 'Trung bình', max: 28, color: 'amber', days: 14, icon: 'fa-triangle-exclamation', title: 'Mức Độ Trung Bình: Cần Điều Chỉnh',
+    desc: 'Bạn đang có một số dấu hiệu bị ảnh hưởng bởi FOMO. Việc dùng điện thoại buổi tối có thể đang làm giảm chất lượng giấc ngủ và sự tập trung khi học. Điều chỉnh từ bây giờ sẽ giúp bạn khá lên nhanh.' },
+  { short: 'Cao', max: 40, color: 'rose', days: 21, icon: 'fa-hand-holding-heart', title: 'Mức Độ Cao: Bạn Nên Được Hỗ Trợ',
+    desc: 'Điện thoại và mạng xã hội đang ảnh hưởng nhiều đến giấc ngủ và việc học của bạn. Đây không phải là chẩn đoán bệnh, nhưng là dấu hiệu bạn không nên tự xoay xở một mình: hãy bắt đầu lộ trình và trò chuyện với người lớn bạn tin tưởng.' }
 ];
+
+// Thông tin hỗ trợ hiện khi kết quả ở mức Cao. NHÀ TRƯỜNG CẦN ĐIỀN thông tin thật của phòng tư vấn (phòng, giờ, người phụ trách).
+export const SUPPORT = {
+  school: 'Phòng Tư vấn tâm lý học đường, Trường THCS Nguyễn Tất Thành. Bạn cũng có thể nói với giáo viên chủ nhiệm.',
+  hotline: '111', // Tổng đài quốc gia bảo vệ trẻ em: miễn phí, 24/7
+  hotlineName: 'Tổng đài quốc gia bảo vệ trẻ em (miễn phí, 24/7)'
+};
+// Nhãn bảng hỏi: 10 câu do nhóm tự xây dựng, không phải thang FOMO-S hay PSQI nguyên bản.
+export const SCALE_LABEL = 'Bảng hỏi tự xây dựng • tham khảo FOMO-S &amp; PSQI';
