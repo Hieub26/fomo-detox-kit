@@ -14,13 +14,13 @@ import { sb } from '../../lib/supabase';
 
 interface Account { id: string; username: string; full_name: string; class_name: string | null; role: UserRole; approved: boolean }
 const NO_CLASS = '(Chưa có lớp)';
-const MAX_ROWS = 200; // toàn trường có thể rất nhiều học sinh; chỉ vẽ một phần, tìm kiếm để thu hẹp
+const PAGE_SIZE = 10; // số tài khoản mỗi trang trong bảng Tài Khoản
 const ROLE_LABEL: Record<UserRole, string> = { student: 'Học sinh', teacher: 'Giáo viên', admin: 'Quản trị' };
 
 const A = {
   accounts: [] as Account[], classes: {} as Record<string, string[]>, // teacher_id -> lớp
   assess: {} as Record<string, Assessment[]>, programs: {} as Record<string, Program[]>,
-  q: '', cls: '', role: '' as UserRole | 'pending' | '', selected: null as string | null,
+  q: '', cls: '', role: '' as UserRole | 'pending' | '', selected: null as string | null, page: 0,
   tempPass: null as { id: string; value: string } | null,
   codes: {} as { teacher?: string; admin?: string },
   quizDraft: null as QuizItem[] | null, quizOpen: false, // giữ phần đang sửa khi trang quản trị vẽ lại
@@ -66,7 +66,7 @@ const tile = (label: string, value: string | number, note?: string) => `<div cla
 const tempPassNote = (id: string, who: string) => (A.tempPass && A.tempPass.id === id
   ? `<div class="mt-2 text-sm rounded-xl px-3 py-2 bg-amber-50 text-amber-900 border border-amber-200 whitespace-normal">Mật khẩu mới: <code class="font-bold select-all">${esc(A.tempPass.value)}</code>. Hãy đưa riêng cho ${who} và nhắc đổi lại ở mục Hồ sơ. Mật khẩu chỉ hiện một lần.</div>`
   : '');
-const smallBtn = 'px-2.5 py-1 border border-slate-200 rounded-lg text-xs hover:bg-slate-50 whitespace-nowrap';
+const smallBtn = 'px-2.5 py-1 border border-slate-200 rounded-lg text-xs hover:bg-slate-50 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent';
 
 export function drawAdmin() {
   if (tab !== 8) return;
@@ -179,8 +179,12 @@ function filteredAccounts() {
 }
 
 function usersHtml() {
-  const all = filteredAccounts(), rows = all.slice(0, MAX_ROWS);
-  if (!rows.length) return '<p class="text-sm text-slate-500">Không có tài khoản nào khớp.</p>';
+  const all = filteredAccounts();
+  if (!all.length) return '<p class="text-sm text-slate-500">Không có tài khoản nào khớp.</p>';
+  const pages = Math.ceil(all.length / PAGE_SIZE);
+  if (A.page >= pages) A.page = pages - 1; // trang hiện tại vượt quá số trang sau khi lọc
+  if (A.page < 0) A.page = 0;
+  const start = A.page * PAGE_SIZE, rows = all.slice(start, start + PAGE_SIZE);
   return `<div class="overflow-x-auto custom-scrollbar"><table class="w-full text-sm text-left whitespace-nowrap">
     <tr class="text-xs text-slate-500"><th class="py-2 pr-3">Họ tên</th><th class="pr-3">Vai trò</th><th class="pr-3">Lớp</th><th class="pr-3">Số lần TN</th><th class="pr-3">Gần nhất</th><th class="pr-3">Lộ trình</th><th></th></tr>
     ${rows.map(a => {
@@ -203,7 +207,14 @@ function usersHtml() {
         ${A.tempPass && A.tempPass.id === a.id ? `<tr><td colspan="7">${tempPassNote(a.id, a.role === 'teacher' ? 'giáo viên' : 'học sinh')}</td></tr>` : ''}`;
     }).join('')}
   </table></div>
-  ${all.length > rows.length ? `<p class="text-xs text-slate-500 mt-2">Đang hiện ${rows.length}/${all.length} tài khoản. Hãy tìm kiếm hoặc lọc theo lớp để thu hẹp.</p>` : ''}
+  <div class="flex items-center justify-between flex-wrap gap-2 mt-3">
+    <p class="text-xs text-slate-500">Hiện ${start + 1}–${start + rows.length} trên ${all.length} tài khoản</p>
+    ${pages > 1 ? `<div class="flex items-center gap-1">
+      <button data-click="adminPage" data-arg="${A.page - 1}" class="${smallBtn}" ${A.page === 0 ? 'disabled' : ''} aria-label="Trang trước"><i class="fa-solid fa-chevron-left"></i></button>
+      <span class="text-xs text-slate-600 px-2">Trang ${A.page + 1}/${pages}</span>
+      <button data-click="adminPage" data-arg="${A.page + 1}" class="${smallBtn}" ${A.page >= pages - 1 ? 'disabled' : ''} aria-label="Trang sau"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>` : ''}
+  </div>
   ${studentDetail()}`;
 }
 
@@ -397,11 +408,12 @@ export function exportCsv() {
 
 registerActions({
   renderAdmin: () => renderAdmin(),
-  adminSearch: ({ el }) => { A.q = el.value; drawUsers(); }, // chỉ vẽ lại bảng để ô tìm kiếm giữ con trỏ
-  adminFilterRole: ({ el }) => { A.role = el.value as typeof A.role; A.selected = null; drawUsers(); },
+  adminSearch: ({ el }) => { A.q = el.value; A.page = 0; drawUsers(); }, // chỉ vẽ lại bảng để ô tìm kiếm giữ con trỏ
+  adminFilterRole: ({ el }) => { A.role = el.value as typeof A.role; A.selected = null; A.page = 0; drawUsers(); },
   adminApprove: ({ arg }) => approve(arg),
   adminDelete: ({ arg }) => deleteAccount(arg),
-  adminFilterClass: ({ el }) => { A.cls = el.value; A.selected = null; drawUsers(); },
+  adminFilterClass: ({ el }) => { A.cls = el.value; A.selected = null; A.page = 0; drawUsers(); },
+  adminPage: ({ arg }) => { A.page = +arg; A.selected = null; drawUsers(); },
   adminSelect: ({ arg }) => { A.selected = A.selected === arg ? null : arg; drawUsers(); },
   adminResetPassword: ({ arg }) => resetPassword(arg),
   adminPromote: ({ arg }) => setRole(arg, 'teacher'),
