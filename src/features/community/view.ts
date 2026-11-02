@@ -3,6 +3,7 @@ import { compareHtml, lineChart } from '../progress/charts';
 import { MAXSCORE } from '../quiz/content';
 import { assessById, levelIdx, lvBadge, sortedAssess } from '../quiz/scoring';
 import { supportBox } from '../quiz/view';
+import '../chat/view'; // đăng ký hành động studentStartChat
 import { refresh } from '../shell/navigation';
 import { $, card, esc, fmtDate, toast, today, uid } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
@@ -108,6 +109,10 @@ export function render5() {
         : `<div title="${b[4]}" class="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl text-slate-400 text-xs font-semibold opacity-60"><i class="fa-solid fa-lock text-base"></i> ${b[0]}</div>`).join('')}</div></div>
   </div>
   ${progressCard()}
+  ${S.profile.role === 'student' ? `<div class="${card} flex items-center justify-between flex-wrap gap-3">
+    <div><h3 class="font-bold text-xl text-slate-800 mb-1"><i class="fa-solid fa-comments text-teal-600 mr-1"></i> Tư Vấn Riêng Với Giáo Viên</h3>
+      <p class="text-xs text-slate-500">Nhắn tin riêng tư với giáo viên phụ trách lớp. Chỉ bạn và giáo viên đọc được.</p></div>
+    <button data-click="studentStartChat" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-xl shadow-sm"><i class="fa-solid fa-paper-plane mr-1"></i> Nhắn tin</button></div>` : ''}
   <div class="${card}">
     <h3 class="font-bold text-xl text-slate-800 mb-1">Góc Chia Sẻ Ẩn Danh (Confession)</h3>
     <p class="text-xs text-slate-500 mb-6">Nơi học sinh THCS Nguyễn Tất Thành trải lòng về áp lực FOMO &amp; lan tỏa động lực Detox. Mọi người đọc được bài của nhau nhưng không ai thấy tên người viết. Bài vi phạm sẽ bị quản trị viên gỡ.</p>

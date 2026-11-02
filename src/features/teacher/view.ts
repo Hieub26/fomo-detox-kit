@@ -8,6 +8,7 @@ import { Sync, TABLES, fetchAllRows } from '../sync/sync';
 import { $, bt, card, download, esc, fmtDate, inp, toCsv, toast } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
 import { isModalOpen, openModal, updateModal } from '../../lib/modal';
+import { teacherStartChat } from '../chat/view';
 import { sb } from '../../lib/supabase';
 
 interface Student { id: string; username: string; full_name: string; class_name: string | null; approved: boolean }
@@ -129,7 +130,10 @@ export function studentDetail() {
   return `<div class="${card}">
     <div class="flex items-center justify-between flex-wrap gap-2">
       <h3 class="font-bold text-lg text-slate-800">${esc(s.full_name || s.username)} <span class="text-xs font-normal text-slate-500">(${esc(s.username)} • ${esc(s.class_name || '')})</span></h3>
-      <button data-click="resetStudentPassword" data-arg="${esc(s.id)}" class="${bt} bg-slate-700 hover:bg-slate-800 !py-1.5"><i class="fa-solid fa-key mr-1"></i> Đặt lại mật khẩu</button>
+      <div class="flex gap-2">
+        <button data-click="teacherChat" data-arg="${esc(s.id)}" class="${bt} bg-teal-600 hover:bg-teal-700 !py-1.5"><i class="fa-solid fa-comments mr-1"></i> Nhắn tin</button>
+        <button data-click="resetStudentPassword" data-arg="${esc(s.id)}" class="${bt} bg-slate-700 hover:bg-slate-800 !py-1.5"><i class="fa-solid fa-key mr-1"></i> Đặt lại mật khẩu</button>
+      </div>
     </div>
     ${T.tempPass && T.tempPass.id === s.id ? `<div class="mt-3 text-sm rounded-xl px-3 py-2 bg-amber-50 text-amber-900 border border-amber-200">Mật khẩu mới: <code class="font-bold select-all">${esc(T.tempPass.value)}</code>. Hãy đưa riêng cho học sinh và nhắc đổi lại ở mục Hồ sơ. Mật khẩu chỉ hiện một lần.</div>` : ''}
     ${as.length ? `<div class="max-w-xl mt-3">${lineChart(as)}</div>
@@ -206,4 +210,5 @@ registerActions({
   render7: () => render7(),
   resetStudentPassword: ({ arg }) => resetStudentPassword(arg),
   selectStudent: ({ arg }) => selectStudent(arg),
+  teacherChat: ({ arg }) => { const s = T.students.find(x => x.id === arg); if (s) teacherStartChat(arg, s.full_name || s.username); },
 });
