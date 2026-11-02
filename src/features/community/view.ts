@@ -31,7 +31,7 @@ function feedHtml() {
       ? `<button data-click="delPost" data-arg="${esc(p.id)}" class="ml-2 text-rose-500" aria-label="Xóa"><i class="fa-solid fa-trash-can"></i></button>`
       : admin ? `<button data-click="adminDelPost" data-arg="${esc(p.id)}" class="ml-2 text-rose-500" aria-label="Xóa bài này" title="Xóa bài (quản trị)"><i class="fa-solid fa-trash-can"></i></button>` : '';
     return `<div class="p-4 rounded-xl border ${mine ? 'border-teal-100 bg-teal-50/40' : 'border-slate-100 bg-slate-50/50'}"><div class="flex justify-between items-center mb-2">
-      <span class="text-xs font-bold ${mine ? 'text-teal-700' : 'text-slate-600'}"><i class="fa-solid fa-user-ninja mr-1"></i> ${mine ? 'Bạn • Ẩn danh' : 'Ẩn danh'}</span>
+      <span class="text-xs font-bold ${mine ? 'text-teal-700' : 'text-slate-600'}"><i class="fa-solid fa-user-ninja mr-1"></i> Ẩn danh</span>
       <span class="text-[11px] text-slate-400">${fmtDate(p.date)} ${del}</span></div>
       <p class="text-sm text-slate-700" style="white-space:pre-wrap">${esc(p.text)}</p></div>`;
   }).join('');
