@@ -8,11 +8,12 @@ Cần Docker và Node.js.
 
 ```bash
 npm install
-npm run db:start     # chạy Supabase local, tự áp dụng supabase/migrations
-npm run serve        # mở http://localhost:8000
+cp .env.example .env.local   # giá trị mặc định trỏ tới Supabase local
+npm run db:start             # chạy Supabase local, tự áp dụng supabase/migrations
+npm run dev                  # mở http://localhost:8000
 ```
 
-`config.js` đã trỏ sẵn tới Supabase local. Dừng bằng `npm run db:stop`.
+Dừng database bằng `npm run db:stop`. Service worker chỉ chạy ở bản build; xem thử bản build bằng `npm run build` rồi `npm run preview`.
 
 Tạo mã giáo viên (mã chỉ hiện một lần, chạy lại sẽ đổi mã và mã cũ hết hiệu lực):
 
@@ -20,7 +21,21 @@ Tạo mã giáo viên (mã chỉ hiện một lần, chạy lại sẽ đổi m�
 docker exec supabase_db_fomo_detox_kit psql -U postgres -At -c "select private.rotate_teacher_code()"
 ```
 
-Sau khi sửa class Tailwind trong code, chạy `npm run build:css` để tạo lại `app.css`.
+## Cấu trúc
+
+```
+public/             file tĩnh giữ nguyên tên (icon, manifest)
+src/
+  main.ts           điểm vào
+  service-worker.js mẫu service worker, vite.config.ts điền danh sách file khi build
+  styles/           Tailwind và CSS chung
+  types/            kiểu dữ liệu dùng chung
+  state/            dữ liệu của người dùng đang đăng nhập
+  lib/              Supabase client, tiện ích DOM
+  features/         mỗi thư mục là một chức năng: auth, sync, shell, handbook,
+                    quiz, program, audio, community, progress, profile, teacher
+supabase/           cấu hình và migration của database
+```
 
 ## Đưa lên Supabase thật
 
@@ -29,10 +44,10 @@ Sau khi sửa class Tailwind trong code, chạy `npm run build:css` để tạo 
 3. Vào Authentication → Providers → Email, đặt độ dài mật khẩu tối thiểu là 8.
 4. Áp dụng database: `npx supabase link --project-ref <ref>` rồi `npx supabase db push`.
 5. Trong SQL Editor, chạy `select private.rotate_teacher_code();` để lấy mã giáo viên. Chỉ đưa mã này cho giáo viên.
-6. Sửa `config.js`: điền URL và khóa **publishable/anon** của project. Không bao giờ đặt `service_role` hoặc secret key vào đó.
-7. Đưa các file tĩnh lên một hosting có HTTPS.
+6. Tạo `.env.production` từ `.env.example`: điền URL và khóa **publishable/anon** của project. Không bao giờ đặt `service_role` hoặc secret key vào đó.
+7. Chạy `npm run build` rồi đưa thư mục `dist/` lên một hosting có HTTPS.
 
-Không đổi `USERNAME_EMAIL_DOMAIN` sau khi đã có tài khoản, vì mọi người sẽ không đăng nhập được nữa.
+Không đổi `VITE_USERNAME_EMAIL_DOMAIN` sau khi đã có tài khoản, vì mọi người sẽ không đăng nhập được nữa.
 
 ## Quyền truy cập
 
