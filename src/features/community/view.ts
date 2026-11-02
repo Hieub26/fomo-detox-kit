@@ -26,12 +26,14 @@ export function badges(): [string, string, string, boolean, string][] {
   const list = sortedAssess();
   const control = S.programs.some(p => { const a = assessById(p.preId), b = p.postId && assessById(p.postId); return a && b && b.score <= a.score - 3; })
     || (list.length > 1 && levelIdx(list[list.length - 1].score) === 0 && levelIdx(list[0].score) > 0);
-  return [
+  const admin = S.profile.role === 'admin'; // quản trị viên thấy mọi huy hiệu đã mở để xem trước giao diện
+  const list4: [string, string, string, boolean, string][] = [
     ['Chiến Binh Giấc Ngủ', 'fa-award', 'teal', completed(7), 'Hoàn thành lộ trình 7 ngày'],
     ['Bậc Thầy Kiểm Soát', 'fa-shield-halved', 'indigo', control, 'Giảm từ 3 điểm trở lên sau lộ trình'],
     ['Sứ Giả Detox (14 Ngày)', 'fa-medal', 'amber', completed(14), 'Hoàn thành lộ trình 14 ngày'],
     ['Bậc Thầy Detox (21 Ngày)', 'fa-crown', 'rose', completed(21), 'Hoàn thành lộ trình 21 ngày']
   ];
+  return admin ? list4.map(b => [b[0], b[1], b[2], true, b[4]]) : list4;
 }
 export const BCLS: Record<string, string> = {
   teal: 'bg-teal-50 border-teal-200 text-teal-800|text-teal-600', indigo: 'bg-indigo-50 border-indigo-200 text-indigo-800|text-indigo-600',
