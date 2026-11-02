@@ -124,6 +124,9 @@ export type Database = {
                            },
 "teacher_reset_password":
 { Args: { "new_password": string,"target": string }; Returns: undefined
+                           },
+"viewable_students":
+{ Args: Record<PropertyKey, never>; Returns: string[]
                            }
           }
           Enums: {
