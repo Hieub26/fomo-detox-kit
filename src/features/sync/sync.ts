@@ -153,10 +153,11 @@ export const Sync = {
     this.pulling = true;
     let changed = false, ok = true;
     try {
-      const { data: me, error } = await sb.from('profiles').select('username,full_name,class_name,role').eq('id', uid).single();
+      const [{ data: me, error }, merges] = await Promise.all([
+        sb.from('profiles').select('username,full_name,class_name,role').eq('id', uid).single(),
+        Promise.all(GROUPS_KEYS.map(key => this.fetchGroup(key, uid)))
+      ]);
       if (error) throw error;
-      const merges: (() => boolean)[] = [];
-      for (const key of GROUPS_KEYS) merges.push(await this.fetchGroup(key, uid));
       const prof = { code: me.username, name: me.full_name, cls: me.class_name || '', role: me.role };
       if (JSON.stringify(prof) !== JSON.stringify(S.profile)) { changed = true; S.profile = prof; }
       for (const merge of merges) changed = merge() || changed;
