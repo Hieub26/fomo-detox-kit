@@ -44,6 +44,7 @@
 .fa-cloud-showers-heavy::before { content: "\f740"; }
 .fa-crown::before { content: "\f521"; }
 .fa-database::before { content: "\f1c0"; }
+.fa-file-csv::before { content: "\f6dd"; }
 .fa-file-signature::before { content: "\f573"; }
 .fa-flag-checkered::before { content: "\f11e"; }
 .fa-floppy-disk::before { content: "\f0c7"; }

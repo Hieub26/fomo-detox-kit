@@ -2,8 +2,8 @@ import type { Assessment, Program, UserRole } from '../../types';
 import { adminDeleteUser, adminResetPassword, adminSetRole, rotateAdminCode, rotateTeacherCode, setStudentApproval } from './api';
 import { checkedCount, pct } from '../program/progress';
 import { compareHtml, lineChart } from '../progress/charts';
-import { LEVELS, MAXSCORE } from '../quiz/content';
-import { byDate, levelIdx, lvBadge } from '../quiz/scoring';
+import { GROUPS, LEVELS, MAXSCORE } from '../quiz/content';
+import { byDate, groupScore, levelIdx, lvBadge } from '../quiz/scoring';
 import { tab } from '../shell/navigation';
 import { TABLES, fetchAllRows } from '../sync/sync';
 import { randomPassword } from '../teacher/view';
@@ -81,7 +81,8 @@ export function drawAdmin() {
       <div class="flex items-center justify-between flex-wrap gap-2">
         <div><h2 class="font-bold text-xl text-slate-800 mb-1"><i class="fa-solid fa-user-shield text-teal-600 mr-1"></i> Quản Trị Toàn Trường</h2>
           <p class="text-xs text-slate-500">Xem kết quả của mọi lớp, phân công lớp cho giáo viên, xác nhận học sinh, đặt lại mật khẩu, xóa tài khoản và đổi mã kích hoạt. Quản trị viên không xem được Góc Ẩn Danh.</p></div>
-        <button data-click="renderAdmin" aria-label="Tải lại" title="Tải lại" class="w-9 h-9 border border-slate-200 rounded-lg hover:bg-slate-50"><i class="fa-solid fa-rotate-right text-slate-500"></i></button>
+        <div class="flex gap-2"><button data-click="adminExportResearch" class="${bt} bg-teal-600 hover:bg-teal-700 !py-1.5" title="Mỗi dòng là một lần làm trắc nghiệm, không kèm họ tên"><i class="fa-solid fa-file-csv mr-1"></i> Xuất dữ liệu nghiên cứu</button>
+        <button data-click="renderAdmin" aria-label="Tải lại" title="Tải lại" class="w-9 h-9 border border-slate-200 rounded-lg hover:bg-slate-50"><i class="fa-solid fa-rotate-right text-slate-500"></i></button></div>
       </div>
     </div>
     <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -301,6 +302,30 @@ async function rotate(kind: 'teacher' | 'admin') {
   try { A.codes[kind] = (await (kind === 'teacher' ? rotateTeacherCode() : rotateAdminCode())) ?? undefined; } catch (e) { failed(e, 'Không tạo được mã mới.'); return; }
   drawAdmin();
 }
+// Dữ liệu cho phân tích nghiên cứu: mỗi dòng là một lần làm trắc nghiệm của học sinh, kèm đáp án từng câu.
+// Không có họ tên hay tên đăng nhập: mỗi học sinh được đánh mã HS001, HS002... theo thứ tự cố định trong lần xuất.
+// Mã chỉ ổn định trong cùng một lần xuất; nếu có tài khoản mới thì mã có thể dịch chuyển.
+export function exportResearch() {
+  const students = byRole('student').slice().sort((a, b) => (a.id < b.id ? -1 : 1));
+  const head = ['ma_hs', 'lop', 'da_xac_nhan_lop', 'lan_thu', 'ngay', 'loai', 'lo_trinh_ngay', 'lo_trinh_trang_thai', 'lo_trinh_phan_tram',
+    'tong_diem_10_40', 'muc', ...GROUPS.map((_, i) => 'nhom_' + (i + 1)), ...Array.from({ length: 10 }, (_, i) => 'c' + (i + 1))];
+  const rows: (string | number)[][] = [];
+  students.forEach((s, n) => {
+    const code = 'HS' + String(n + 1).padStart(3, '0'), ps = A.programs[s.id] || [];
+    (A.assess[s.id] || []).forEach((a, k) => {
+      // "truoc": điểm gốc của một lộ trình; "sau": khảo sát sau lộ trình; "thuong": làm lại ngoài lộ trình.
+      const pre = ps.find(p => p.preId === a.id), post = ps.find(p => p.postId === a.id) || (a.kind === 'sau' ? ps.find(p => p.id === a.programId) : undefined);
+      const p = post || pre;
+      rows.push([code, s.class_name || '', s.approved ? 1 : 0, k + 1, a.date.slice(0, 10), post ? 'sau' : pre ? 'truoc' : 'thuong',
+        p ? p.days : '', p ? p.status : '', p ? pct(p) : '', a.score, LEVELS[levelIdx(a.score)].short,
+        ...GROUPS.map(g => groupScore(a.answers, g)), ...a.answers]);
+    });
+  });
+  if (!rows.length) { toast('Chưa có lần làm trắc nghiệm nào để xuất.'); return; }
+  const note = [['# Ghi chú: c1-c10 là đáp án gốc 1-4. Tổng điểm tính câu 10 ngược (5 - c10). Nhóm: ' + GROUPS.map((g, i) => `nhom_${i + 1}=${g.name} (câu ${g.items.join(',')})`).join('; ')]];
+  download(`fomo-du-lieu-nghien-cuu-${new Date().toISOString().slice(0, 10)}.csv`, toCsv([head, ...rows, [], ...note]), 'text/csv');
+  toast(`Đã xuất ${rows.length} lần làm trắc nghiệm của ${new Set(rows.map(r => r[0])).size} học sinh.`);
+}
 export function exportCsv() {
   const head = ['ten_dang_nhap', 'ho_ten', 'vai_tro', 'lop', 'so_lan', 'diem_dau', 'diem_gan_nhat', 'thay_doi', 'muc', 'lo_trinh_ngay', 'phan_tram_hoan_thanh'];
   const rows = filteredAccounts().map(a => {
@@ -328,4 +353,5 @@ registerActions({
   adminRotateTeacherCode: () => rotate('teacher'),
   adminRotateAdminCode: () => rotate('admin'),
   adminExportCsv: () => exportCsv(),
+  adminExportResearch: () => exportResearch(),
 });
