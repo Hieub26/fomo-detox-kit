@@ -93,6 +93,20 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"quiz_questions": {
+                  Row: {
+                    "labels": (string)[],"num": number,"points": (number)[],"question": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "labels": (string)[],"num": number,"points": (number)[],"question": string
+                  }
+                  Update: {
+                    "labels"?: (string)[],"num"?: number,"points"?: (number)[],"question"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"teacher_classes": {
                   Row: {
                     "class_name": string,"teacher_id": string
@@ -124,6 +138,9 @@ export type Database = {
                            },
 "admin_rotate_teacher_code":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"admin_save_quiz":
+{ Args: { "items": Json }; Returns: undefined
                            },
 "admin_set_role":
 { Args: { "new_role": string,"target": string }; Returns: undefined
