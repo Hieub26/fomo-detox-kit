@@ -32,7 +32,7 @@ export function stopPlan() {
 
 export function render3() {
   const act = activeProgram(), last = lastAssess();
-  const sel = planPick || (act ? act.days : last ? LEVELS[levelIdx(last.score)].days : 7);
+  const sel = planPick || (act ? act.days : last ? LEVELS[levelIdx(last.score)].days || 7 : 7); // mức không cần lộ trình: xem trước bản 7 ngày
   const mine = act && act.days === sel ? act : null;
   const plan = PLANS[sel];
   const cur = mine ? currentDay(mine) : 0;
@@ -66,7 +66,7 @@ export function render3() {
         <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition ${d === sel ? 'border-teal-500 bg-teal-50/30' : 'border-slate-200'}">
           <input type="radio" name="detoxPlan" ${d === sel ? 'checked' : ''} data-click="pickPlan" data-arg="${d}" class="accent-teal-600">
           <div class="ml-3"><span class="font-semibold text-slate-800 text-sm block">Lộ trình ${d} Ngày (${PLANS[d].sub})${act && act.days === d ? ' • đang thực hiện' : ''}</span><span class="text-xs text-slate-500">${PLANS[d].who}</span></div></label>`).join('')}</div>
-        ${last ? `<p class="text-xs text-slate-500 mt-3">Điểm gần nhất ${last.score}/${MAXSCORE} ${lvBadge(last.score)}: gợi ý ${LEVELS[levelIdx(last.score)].days} ngày.</p>` : `<p class="text-xs text-slate-500 mt-3">Chưa có điểm. <a href="#2" class="text-teal-600 font-semibold">Làm trắc nghiệm</a> để nhận gợi ý.</p>`}
+        ${last ? `<p class="text-xs text-slate-500 mt-3">Điểm gần nhất ${last.score}/${MAXSCORE} ${lvBadge(last.score)}: ${LEVELS[levelIdx(last.score)].days ? `gợi ý ${LEVELS[levelIdx(last.score)].days} ngày` : 'không cần lộ trình'}.</p>` : `<p class="text-xs text-slate-500 mt-3">Chưa có điểm. <a href="#2" class="text-teal-600 font-semibold">Làm trắc nghiệm</a> để nhận gợi ý.</p>`}
       </div>
     </div>
     <div class="lg:col-span-2 ${card}">

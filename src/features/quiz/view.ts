@@ -80,7 +80,7 @@ export function showResult(box: HTMLElement, a: Assessment) {
   const pre = prog && assessById(prog.preId);
   let actions = '';
   if (isHigh(a.score)) actions = `<button data-click="startPlan" data-arg="21" class="px-4 py-2 ${C.btn} text-white text-xs font-semibold rounded-lg">Bắt Đầu Lộ Trình Detox 21 Ngày</button>`;
-  else actions = `<button data-click="startPlan" data-arg="${L.days}" class="px-4 py-2 ${C.btn} text-white text-xs font-semibold rounded-lg">${li <= 1 ? 'Duy trì' : 'Kích Hoạt'} Lộ Trình Detox ${L.days} Ngày</button>`;
+  else if (L.days) actions = `<button data-click="startPlan" data-arg="${L.days}" class="px-4 py-2 ${C.btn} text-white text-xs font-semibold rounded-lg">${li <= 1 ? 'Duy trì' : 'Kích Hoạt'} Lộ Trình Detox ${L.days} Ngày</button>`;
   actions += `<button data-click="switchTab" data-arg="5" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50">Xem tiến độ</button>`;
   box.className = `mt-8 p-6 rounded-2xl border ${C.box} animate-fade-in`;
   box.innerHTML = `<div class="flex items-start gap-4">

@@ -30,10 +30,10 @@ export const COLOR: Record<string, Record<string, string>> = {
   rose: { box: 'border-rose-300 bg-rose-50/50', icon: 'bg-rose-500', title: 'text-rose-900', badge: 'bg-rose-600', btn: 'bg-rose-600 hover:bg-rose-700', soft: 'bg-rose-100 text-rose-800' }
 };
 // Bốn mức, nguy cơ tăng dần. Ngưỡng ≤18 và ≤28 theo bản gốc, mức nhẹ cũ được tách thêm ở 14.
-// Gợi ý lộ trình: rất nhẹ và nhẹ 7 ngày, vừa 14 ngày, cao 21 ngày.
+// Gợi ý lộ trình: rất nhẹ không cần (days = 0), nhẹ 7 ngày, vừa 14 ngày, cao 21 ngày.
 export const LEVELS = [
-  { short: 'Rất nhẹ', max: 14, color: 'emerald', days: 7, icon: 'fa-shield-halved', title: 'Mức Độ Rất Nhẹ: Kiểm Soát Rất Tốt',
-    desc: 'Chúc mừng! Bạn duy trì thói quen công nghệ rất lành mạnh. Cảm giác FOMO thấp và chất lượng giấc ngủ được bảo vệ tốt.' },
+  { short: 'Rất nhẹ', max: 14, color: 'emerald', days: 0, icon: 'fa-shield-halved', title: 'Mức Độ Rất Nhẹ: Kiểm Soát Rất Tốt',
+    desc: 'Chúc mừng! Bạn duy trì thói quen công nghệ rất lành mạnh. Cảm giác FOMO thấp và chất lượng giấc ngủ được bảo vệ tốt. Bạn không cần lộ trình detox, chỉ cần giữ thói quen hiện tại.' },
   { short: 'Nhẹ', max: 18, color: 'lime', days: 7, icon: 'fa-circle-check', title: 'Mức Độ Nhẹ: Kiểm Soát Tốt',
     desc: 'Bạn đang kiểm soát khá tốt, dù đôi lúc vẫn có cảm giác sợ bỏ lỡ hoặc dùng điện thoại muộn. Giữ vài thói quen nhỏ trước giờ ngủ sẽ giúp bạn duy trì trạng thái này.' },
   { short: 'Vừa', max: 28, color: 'amber', days: 14, icon: 'fa-triangle-exclamation', title: 'Mức Độ Vừa: Cần Điều Chỉnh',

@@ -14,7 +14,7 @@ export const BASE_TASKS = [
   'Tự thưởng cho bản thân một món quà nhỏ vì duy trì thói quen tốt.'
 ];
 export const PLANS: Record<number, { sub: string; who: string; badge: string; tasks: string[] }> = {
-  7: { sub: 'Cơ bản', who: 'Dành cho mức độ rất nhẹ và nhẹ', badge: 'Chiến Binh Giấc Ngủ', tasks: BASE_TASKS.slice(0, 7) },
+  7: { sub: 'Cơ bản', who: 'Dành cho mức độ nhẹ', badge: 'Chiến Binh Giấc Ngủ', tasks: BASE_TASKS.slice(0, 7) },
   14: {
     sub: 'Chuyên sâu', who: 'Dành cho mức độ FOMO vừa', badge: 'Sứ Giả Detox',
     tasks: BASE_TASKS.concat(['Tốt nghiệp Lộ trình Detox 14 ngày & Nhận Huy Hiệu Sứ Giả Detox!'])
