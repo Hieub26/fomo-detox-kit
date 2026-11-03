@@ -7,6 +7,7 @@ export const SOUNDS: Record<string, { name: string; desc: string; icon: string }
   theta: { name: 'Sóng Theta (6Hz)', desc: 'Nhịp phách 6Hz, có thể giúp thư giãn trước khi ngủ', icon: 'fa-bed' },
   delta: { name: 'Sóng Delta (3Hz)', desc: 'Nhịp phách 3Hz, có thể giúp dễ vào giấc hơn', icon: 'fa-moon' },
   rain: { name: 'Mưa Nhẹ (Pink Noise)', desc: 'Tiếng mưa êm, che bớt các tiếng ồn gây xao nhãng', icon: 'fa-cloud-showers-heavy' },
+  white: { name: 'Tiếng Ồn Trắng (White Noise)', desc: 'Âm đều, che bớt tiếng ồn xung quanh', icon: 'fa-wind' },
   ocean: { name: 'Sóng Biển Dịu Êm (Pink Noise)', desc: 'Tần số nhịp nhàng dịu êm, nhấp nhô như sóng vỗ', icon: 'fa-water' },
   lofi: { name: 'Giai Điệu Thiền Nhẹ Nhàng', desc: 'Nhịp điệu chậm rãi, nhẹ nhàng', icon: 'fa-music' }
 };
@@ -43,6 +44,9 @@ export function buildSound(ctx: AudioContext, out: AudioNode, key: string) {
     const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 200;
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
     hp.connect(lp); lp.connect(out); noise('pink', hp);
+  } else if (key === 'white') {
+    // White noise nguyên bản rất to và chói, nên hạ xuống ngang các âm nền khác.
+    const soft = ctx.createGain(); soft.gain.value = .2; soft.connect(out); noise('white', soft);
   } else if (key === 'ocean') {
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700;
     const swell = ctx.createGain(); swell.gain.value = .6;
@@ -111,10 +115,10 @@ export function renderPlayer() {
 }
 export function render4() {
   const total = Math.round(S.audio.reduce((a, b) => a + b.seconds, 0) / 60);
-  const lib: string[][] = [['alpha', 'teal', 'Thư giãn não bộ sau giờ học'], ['theta', 'indigo', 'Thư giãn trước khi ngủ'], ['delta', 'violet', 'Hỗ trợ dễ vào giấc'], ['rain', 'sky', 'Xoa dịu tiếng ồn xung quanh'], ['ocean', 'emerald', 'Tần số nhịp nhàng dịu êm'], ['lofi', 'amber', 'Giai điệu chậm dưới 60BPM']];
+  const lib: string[][] = [['alpha', 'teal', 'Thư giãn não bộ sau giờ học'], ['theta', 'indigo', 'Thư giãn trước khi ngủ'], ['delta', 'violet', 'Hỗ trợ dễ vào giấc'], ['rain', 'sky', 'Xoa dịu tiếng ồn xung quanh'], ['white', 'slate', 'Che bớt tiếng ồn xung quanh'], ['ocean', 'emerald', 'Tần số nhịp nhàng dịu êm'], ['lofi', 'amber', 'Giai điệu chậm dưới 60BPM']];
   const LC: Record<string, string> = {
     teal: 'hover:border-teal-500 hover:bg-teal-50/50|bg-teal-100 text-teal-600', indigo: 'hover:border-indigo-500 hover:bg-indigo-50/50|bg-indigo-100 text-indigo-600', violet: 'hover:border-violet-500 hover:bg-violet-50/50|bg-violet-100 text-violet-600',
-    sky: 'hover:border-sky-500 hover:bg-sky-50/50|bg-sky-100 text-sky-600', emerald: 'hover:border-emerald-500 hover:bg-emerald-50/50|bg-emerald-100 text-emerald-600',
+    slate: 'hover:border-slate-500 hover:bg-slate-50/50|bg-slate-100 text-slate-600', sky: 'hover:border-sky-500 hover:bg-sky-50/50|bg-sky-100 text-sky-600', emerald: 'hover:border-emerald-500 hover:bg-emerald-50/50|bg-emerald-100 text-emerald-600',
     amber: 'hover:border-amber-500 hover:bg-amber-50/50|bg-amber-100 text-amber-600'
   };
   $('#module-4').innerHTML = `<div class="${card} sm:p-8">
