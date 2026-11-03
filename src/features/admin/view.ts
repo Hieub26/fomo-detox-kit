@@ -198,7 +198,7 @@ function usersHtml() {
         <td class="py-2 pr-3"><div class="font-semibold text-slate-800">${esc(name(a))}</div><div class="text-[11px] text-slate-400">${esc(a.username)}</div></td>
         <td class="pr-3">${ROLE_LABEL[a.role]}${isPending(a) ? ' <span class="ml-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-semibold">Chờ xác nhận</span>' : ''}</td><td class="pr-3">${esc(cls)}</td>
         <td class="pr-3">${a.role === 'student' ? as.length : ''}</td><td class="pr-3">${last ? lvBadge(last.score) : ''}</td>
-        <td class="pr-3">${p ? `${p.days} ngày • ${pct(p)}%` : ''}</td>
+        <td class="pr-3">${p && !(last && levelIdx(last.score) === 0) ? `${p.days} ngày • ${pct(p)}%` : ''}</td>
         <td class="text-right"><div class="flex gap-1.5 justify-end">${actions}</div></td></tr>
         ${A.tempPass && A.tempPass.id === a.id ? `<tr><td colspan="7">${tempPassNote(a.id, a.role === 'teacher' ? 'giáo viên' : 'học sinh')}</td></tr>` : ''}`;
     }).join('')}
