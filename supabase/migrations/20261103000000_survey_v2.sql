@@ -5,7 +5,11 @@
 
 alter table public.assessments drop constraint if exists assessments_answers_check;
 alter table public.assessments drop constraint if exists assessments_score_check;
+-- Postgres refuses to change the type of a column named in a trigger, so recreate the trigger around it.
+drop trigger compute_score on public.assessments;
 alter table public.assessments alter column score type numeric(3, 2) using round(score / 10.0, 2);
+create trigger compute_score before insert or update of answers, score on public.assessments
+  for each row execute function private.compute_score();
 alter table public.assessments add column if not exists info jsonb
   check (info is null or (jsonb_typeof(info) = 'object' and pg_column_size(info) < 4000));
 
