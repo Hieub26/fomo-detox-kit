@@ -78,6 +78,7 @@
 .fa-stop::before { content: "\f04d"; }
 .fa-trash-can::before { content: "\f2ed"; }
 .fa-triangle-exclamation::before { content: "\f071"; }
+.fa-user::before { content: "\f007"; }
 .fa-user-gear::before { content: "\f4fe"; }
 .fa-user-graduate::before { content: "\f501"; }
 .fa-user-lock::before { content: "\f502"; }
