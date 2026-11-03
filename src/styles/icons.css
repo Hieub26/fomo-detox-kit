@@ -28,6 +28,7 @@
 .fa-bell-slash::before { content: "\f1f6"; }
 .fa-book-open::before { content: "\f518"; }
 .fa-brain::before { content: "\f5dc"; }
+.fa-broom::before { content: "\f51a"; }
 .fa-calculator::before { content: "\f1ec"; }
 .fa-calendar-check::before { content: "\f274"; }
 .fa-chalkboard-user::before { content: "\f51c"; }
@@ -46,6 +47,8 @@
 .fa-comments::before { content: "\f086"; }
 .fa-crown::before { content: "\f521"; }
 .fa-database::before { content: "\f1c0"; }
+.fa-eye::before { content: "\f06e"; }
+.fa-face-frown::before { content: "\f119"; }
 .fa-file-csv::before { content: "\f6dd"; }
 .fa-file-signature::before { content: "\f573"; }
 .fa-flag-checkered::before { content: "\f11e"; }
@@ -66,10 +69,13 @@
 .fa-paper-plane::before { content: "\f1d8"; }
 .fa-pause::before { content: "\f04c"; }
 .fa-pen-to-square::before { content: "\f044"; }
+.fa-people-arrows::before { content: "\e068"; }
+.fa-person-walking::before { content: "\f554"; }
 .fa-play::before { content: "\f04b"; }
 .fa-plus::before { content: "\2b"; }
 .fa-right-from-bracket::before { content: "\f2f5"; }
 .fa-rotate-right::before { content: "\f2f9"; }
+.fa-scale-unbalanced::before { content: "\f515"; }
 .fa-school::before { content: "\f549"; }
 .fa-shield-halved::before { content: "\f3ed"; }
 .fa-spinner::before { content: "\f110"; }
