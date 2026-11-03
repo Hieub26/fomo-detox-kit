@@ -1,10 +1,13 @@
 import { CARDS, SITUATIONS } from './config';
 import { CARD_CLS, CARD_COLORS, CARD_ICONS } from './content';
+import { handbookEditor } from './editor';
 import { $, card, esc } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
 
 export function render1() {
+  const editor = handbookEditor(); // đọc bản nháp từ khung sửa cũ nên phải gọi trước khi thay nội dung tab
   $('#module-1').innerHTML = `
+    ${editor}
     <div class="bg-gradient-to-r from-teal-600 to-indigo-600 rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
       <div class="absolute right-0 top-0 bottom-0 opacity-10 pointer-events-none flex items-center justify-center p-8"><i class="fa-solid fa-mobile-screen-button text-[200px]"></i></div>
       <div class="max-w-2xl relative z-10">

@@ -2,6 +2,7 @@ import type { Assessment } from '../../types';
 import { compareHtml } from '../progress/charts';
 import { QUIZ } from './config';
 import { COLOR, LEVELS, MAXSCORE, SCALE_LABEL, SUPPORT } from './content';
+import { quizEditor } from './editor';
 import { assessById, isHigh, lastAssess, levelIdx, scoreOf } from './scoring';
 import { switchTab } from '../shell/navigation';
 import { $, card, esc, fmtDate, toast, uid } from '../../lib/dom';
@@ -26,8 +27,9 @@ export function startRetake() {
 export function render2() {
   const post = postFor && S.programs.find(p => p.id === postFor);
   const last = lastAssess();
+  const editor = quizEditor(); // đọc bản nháp từ khung sửa cũ nên phải gọi trước khi thay nội dung tab
   if (last && !post && !retake) {
-    $('#module-2').innerHTML = `<div class="${card} sm:p-8"><div class="max-w-3xl mx-auto">
+    $('#module-2').innerHTML = `${editor}<div class="${card} sm:p-8"><div class="max-w-3xl mx-auto">
       <div class="text-center mb-6"><span class="bg-teal-100 text-teal-800 text-xs font-semibold px-3 py-1 rounded-full">${SCALE_LABEL}</span>
         <h2 class="text-2xl font-bold text-slate-800 mt-2">Kết Quả Trắc Nghiệm Gần Nhất</h2>
         <p class="text-slate-500 text-sm mt-1">Bạn đã hoàn thành trắc nghiệm. Bạn chỉ nên làm lại sau khi thực hiện lộ trình hoặc sau vài ngày để thấy chuyển biến.</p></div>
@@ -38,7 +40,7 @@ export function render2() {
     showResult(box, last);
     return;
   }
-  $('#module-2').innerHTML = `<div class="${card} sm:p-8"><div class="max-w-3xl mx-auto">
+  $('#module-2').innerHTML = `${editor}<div class="${card} sm:p-8"><div class="max-w-3xl mx-auto">
     <div class="text-center mb-8">
       <span class="bg-teal-100 text-teal-800 text-xs font-semibold px-3 py-1 rounded-full">${SCALE_LABEL}</span>
       <h2 class="text-2xl font-bold text-slate-800 mt-2">Đánh Giá Mức Độ FOMO &amp; Giấc Ngủ Của Bạn</h2>

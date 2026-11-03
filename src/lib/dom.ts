@@ -27,3 +27,4 @@ export const card = 'bg-white rounded-2xl p-6 shadow-sm border border-slate-100'
 
 export const inp = 'w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500';
 export const bt = 'px-4 py-2 text-white text-sm font-semibold rounded-lg transition';
+export const smallBtn = 'px-2.5 py-1 border border-slate-200 rounded-lg text-xs hover:bg-slate-50 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent';

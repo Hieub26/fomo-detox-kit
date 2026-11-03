@@ -1,16 +1,14 @@
 import type { Assessment, Program, UserRole } from '../../types';
-import { adminDeleteUser, adminResetPassword, adminSaveHandbook, adminSaveQuiz, adminSetRole, rotateAdminCode, rotateTeacherCode, setStudentApproval } from './api';
-import { CARDS, SITUATIONS, setHandbook } from '../handbook/config';
-import type { HandbookCard, Situation } from '../handbook/content';
+import { adminDeleteUser, adminResetPassword, adminSetRole, rotateAdminCode, rotateTeacherCode, setStudentApproval } from './api';
 import { pct, progressBar } from '../program/progress';
 import { compareHtml, lineChart } from '../progress/charts';
-import { QUIZ, setQuiz } from '../quiz/config';
-import { GROUPS, LEVELS, MAXSCORE, type QuizItem } from '../quiz/content';
+import { QUIZ } from '../quiz/config';
+import { GROUPS, LEVELS, MAXSCORE } from '../quiz/content';
 import { byDate, groupScore, isHigh, levelIdx, lvBadge } from '../quiz/scoring';
 import { tab } from '../shell/navigation';
 import { TABLES, fetchAllRows } from '../sync/sync';
 import { randomPassword } from '../teacher/view';
-import { $, bt, card, daysBetween, download, esc, fmtDate, toCsv, toast } from '../../lib/dom';
+import { $, bt, card, daysBetween, download, esc, fmtDate, smallBtn, toCsv, toast } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
 import { openModal } from '../../lib/modal';
 import { sb } from '../../lib/supabase';
@@ -26,8 +24,6 @@ const A = {
   q: '', cls: '', role: '' as UserRole | 'pending' | '', selected: null as string | null, page: 0,
   tempPass: null as { id: string; value: string } | null,
   codes: {} as { teacher?: string; admin?: string },
-  quizDraft: null as QuizItem[] | null, quizOpen: false, // giữ phần đang sửa khi trang quản trị vẽ lại
-  hb: null as { cards: HandbookCard[]; situations: Situation[] } | null, hbOpen: false, // bản nháp Cẩm Nang
   error: ''
 };
 
@@ -56,8 +52,6 @@ export async function loadAdminData() {
 }
 
 export function renderAdmin() {
-  keepQuizDraft();
-  keepHandbookDraft();
   const box = $('#module-8');
   box.innerHTML = '<p class="text-center text-slate-500 py-16"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang tải dữ liệu toàn trường...</p>';
   loadAdminData().then(() => { A.error = ''; drawAdmin(); }).catch(e => {
@@ -71,12 +65,9 @@ const tile = (label: string, value: string | number, note?: string) => `<div cla
 const tempPassNote = (id: string, who: string) => (A.tempPass && A.tempPass.id === id
   ? `<div class="mt-2 text-sm rounded-xl px-3 py-2 bg-amber-50 text-amber-900 border border-amber-200 whitespace-normal">Mật khẩu mới: <code class="font-bold select-all">${esc(A.tempPass.value)}</code>. Hãy đưa riêng cho ${who} và nhắc đổi lại ở mục Hồ sơ. Mật khẩu chỉ hiện một lần.</div>`
   : '');
-const smallBtn = 'px-2.5 py-1 border border-slate-200 rounded-lg text-xs hover:bg-slate-50 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent';
 
 export function drawAdmin() {
   if (tab !== 8) return;
-  keepQuizDraft();
-  keepHandbookDraft();
   const students = enrolled(), teachers = byRole('teacher'), pending = A.accounts.filter(isPending).length;
   const done = students.filter(s => (A.assess[s.id] || []).length);
   const high = done.filter(s => isHigh(latest(A.assess[s.id])!.score)).length;
@@ -119,8 +110,6 @@ export function drawAdmin() {
       </div>
       <div id="adminUsers">${usersHtml()}</div>
     </div>
-    ${quizCard()}
-    ${handbookCard()}
     ${codesCard()}`;
 }
 
@@ -241,131 +230,6 @@ function studentDetail() {
       <div class="overflow-x-auto mt-2"><table class="w-full text-sm text-left"><tr class="text-xs text-slate-500"><th class="py-1">Ngày</th><th>Loại</th><th>Điểm</th><th>Mức</th></tr>
       ${as.slice().reverse().map(a => `<tr class="border-t border-slate-100"><td class="py-1.5">${fmtDate(a.date)}</td><td>${esc(a.kind)}</td><td class="font-semibold">${a.score}/${MAXSCORE}</td><td>${lvBadge(a.score)}</td></tr>`).join('')}</table></div>` : '<p class="text-sm text-slate-500 mt-2">Học sinh chưa làm trắc nghiệm.</p>'}
     ${progs}</div>`;
-}
-
-function quizCard() {
-  const items = A.quizDraft || QUIZ;
-  const cls = 'border border-slate-200 rounded-lg px-2 py-1.5 text-sm';
-  return `<div class="${card}"><details id="quizEditor" ${A.quizOpen ? 'open' : ''}>
-    <summary class="font-bold text-lg text-slate-800 cursor-pointer"><i class="fa-solid fa-pen-to-square text-teal-600 mr-1"></i> Sửa Câu Hỏi Trắc Nghiệm</summary>
-    <p class="text-xs text-slate-500 mt-1 mb-4">Mỗi đáp án được 1–4 điểm, điểm càng cao nghĩa là nguy cơ càng cao. Tổng luôn trong 10–${MAXSCORE} nên các mức Rất nhẹ, Nhẹ, Vừa, Cao giữ nguyên ngưỡng.</p>
-    <div class="space-y-4">${items.map((q, i) => `<div data-quiz-item class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-      <label class="block text-sm font-semibold text-slate-800 mb-2">Câu ${i + 1}
-        <textarea data-q rows="3" maxlength="300" class="mt-1 w-full font-normal ${cls}">${esc(q.question)}</textarea></label>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">${q.labels.map((l, k) => `<div class="flex gap-2">
-        <input data-label maxlength="60" value="${esc(l)}" aria-label="Câu ${i + 1}, nội dung đáp án ${k + 1}" class="flex-1 min-w-0 ${cls}">
-        <select data-points aria-label="Câu ${i + 1}, điểm đáp án ${k + 1}" class="${cls}">${[1, 2, 3, 4].map(p => `<option value="${p}" ${q.points[k] === p ? 'selected' : ''}>${p} điểm</option>`).join('')}</select></div>`).join('')}</div>
-    </div>`).join('')}</div>
-    <button data-click="adminSaveQuiz" class="${bt} bg-teal-600 hover:bg-teal-700 mt-4"><i class="fa-solid fa-floppy-disk mr-1"></i> Lưu câu hỏi</button>
-  </details></div>`;
-}
-function readQuizForm(): QuizItem[] {
-  return [...document.querySelectorAll<HTMLElement>('[data-quiz-item]')].map(box => ({
-    question: box.querySelector<HTMLTextAreaElement>('[data-q]')!.value.trim(),
-    labels: [...box.querySelectorAll<HTMLInputElement>('[data-label]')].map(el => el.value.trim()),
-    points: [...box.querySelectorAll<HTMLSelectElement>('[data-points]')].map(el => +el.value)
-  }));
-}
-// Gọi trước khi vẽ lại: chỉ giữ bản nháp nếu thật sự khác câu hỏi đang dùng.
-function keepQuizDraft() {
-  const form = document.querySelector<HTMLDetailsElement>('#quizEditor');
-  if (!form) return;
-  A.quizOpen = form.open;
-  const draft = readQuizForm();
-  A.quizDraft = JSON.stringify(draft) === JSON.stringify(QUIZ) ? null : draft;
-}
-async function saveQuiz() {
-  const items = readQuizForm();
-  const empty = items.findIndex(q => !q.question || q.labels.some(l => !l));
-  if (empty >= 0) { toast(`Câu ${empty + 1} còn thiếu nội dung câu hỏi hoặc đáp án.`); return; }
-  if (JSON.stringify(items) === JSON.stringify(QUIZ)) { toast('Chưa có thay đổi nào.'); return; }
-  const rescored = items.some((q, i) => q.points.join() !== QUIZ[i].points.join());
-  if (!confirm(rescored
-    ? 'Điểm đáp án thay đổi nên điểm mọi bài đã làm sẽ được tính lại, và mức của học sinh có thể đổi. Tiếp tục?'
-    : 'Lưu nội dung mới? Học sinh sẽ thấy ngay từ lần mở app tiếp theo. Các bài đã làm vẫn giữ đáp án đã chọn.')) return;
-  try { await adminSaveQuiz(items); } catch (e) { failed(e, 'Không lưu được câu hỏi.'); return; }
-  setQuiz(items);
-  A.quizDraft = null;
-  toast('Đã lưu câu hỏi.');
-  $('#module-8').innerHTML = ''; // bỏ form cũ để renderAdmin không coi đó là bản nháp
-  renderAdmin();
-}
-
-function handbookCard() {
-  const hb = A.hb || { cards: CARDS, situations: SITUATIONS };
-  const cls = 'border border-slate-200 rounded-lg px-2 py-1.5 text-sm w-full';
-  const cardsHtml = hb.cards.map((c, i) => `<div data-hb-card class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-    <div class="flex justify-between items-center mb-2"><span class="text-sm font-semibold text-slate-800">Thẻ ${i + 1}</span>
-      <button data-click="hbDelCard" data-arg="${i}" class="${smallBtn} text-rose-700"><i class="fa-solid fa-trash-can"></i></button></div>
-    <input data-hb-title maxlength="120" value="${esc(c.title)}" placeholder="Tiêu đề" aria-label="Thẻ ${i + 1} tiêu đề" class="${cls} font-semibold mb-2">
-    <textarea data-hb-body rows="3" maxlength="1000" placeholder="Nội dung" aria-label="Thẻ ${i + 1} nội dung" class="${cls} mb-2">${esc(c.body)}</textarea>
-    <input data-hb-callout maxlength="300" value="${esc(c.callout)}" placeholder="Ghi chú nổi bật" aria-label="Thẻ ${i + 1} ghi chú" class="${cls}"></div>`).join('');
-  const sitsHtml = hb.situations.map((s, i) => `<div data-hb-sit class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-    <div class="flex justify-between items-center mb-2"><span class="text-sm font-semibold text-slate-800">Tình huống ${i + 1}</span>
-      <button data-click="hbDelSit" data-arg="${i}" class="${smallBtn} text-rose-700"><i class="fa-solid fa-trash-can"></i></button></div>
-    <input data-hb-stitle maxlength="160" value="${esc(s.title)}" placeholder="Tình huống" aria-label="Tình huống ${i + 1}" class="${cls} font-semibold mb-2">
-    <textarea data-hb-reaction rows="2" maxlength="1000" placeholder="Phản ứng FOMO" aria-label="Tình huống ${i + 1} phản ứng" class="${cls} mb-2">${esc(s.reaction)}</textarea>
-    <textarea data-hb-solution rows="2" maxlength="1000" placeholder="Giải pháp Detox" aria-label="Tình huống ${i + 1} giải pháp" class="${cls}">${esc(s.solution)}</textarea></div>`).join('');
-  return `<div class="${card}"><details id="hbEditor" ${A.hbOpen ? 'open' : ''}>
-    <summary class="font-bold text-lg text-slate-800 cursor-pointer"><i class="fa-solid fa-book text-teal-600 mr-1"></i> Sửa Cẩm Nang Số</summary>
-    <p class="text-xs text-slate-500 mt-1 mb-4">Thêm, sửa, xóa thẻ kiến thức và tình huống. Văn bản thuần, không dùng mã HTML. Tối đa 20 thẻ và 20 tình huống.</p>
-    <h4 class="font-semibold text-sm text-slate-700 mb-2">Thẻ kiến thức</h4>
-    <div class="space-y-3">${cardsHtml}</div>
-    <button data-click="hbAddCard" class="${smallBtn} mt-2"><i class="fa-solid fa-plus mr-1"></i> Thêm thẻ</button>
-    <h4 class="font-semibold text-sm text-slate-700 mt-5 mb-2">Tình huống thực tế</h4>
-    <div class="space-y-3">${sitsHtml}</div>
-    <button data-click="hbAddSit" class="${smallBtn} mt-2"><i class="fa-solid fa-plus mr-1"></i> Thêm tình huống</button>
-    <div class="mt-4"><button data-click="adminSaveHandbook" class="${bt} bg-teal-600 hover:bg-teal-700"><i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Cẩm Nang</button></div>
-  </details></div>`;
-}
-function readHandbookForm(): { cards: HandbookCard[]; situations: Situation[] } {
-  const cards = [...document.querySelectorAll<HTMLElement>('[data-hb-card]')].map(b => ({
-    title: b.querySelector<HTMLInputElement>('[data-hb-title]')!.value.trim(),
-    body: b.querySelector<HTMLTextAreaElement>('[data-hb-body]')!.value.trim(),
-    callout: b.querySelector<HTMLInputElement>('[data-hb-callout]')!.value.trim()
-  }));
-  const situations = [...document.querySelectorAll<HTMLElement>('[data-hb-sit]')].map(b => ({
-    title: b.querySelector<HTMLInputElement>('[data-hb-stitle]')!.value.trim(),
-    reaction: b.querySelector<HTMLTextAreaElement>('[data-hb-reaction]')!.value.trim(),
-    solution: b.querySelector<HTMLTextAreaElement>('[data-hb-solution]')!.value.trim()
-  }));
-  return { cards, situations };
-}
-// Giữ phần đang sửa khi trang quản trị vẽ lại, chỉ khi khác nội dung đang dùng.
-// Bỏ qua một lần khi thêm/xóa đã cập nhật A.hb (lúc đó DOM còn cũ, đọc lại sẽ ghi đè mất).
-let skipHbCapture = false;
-function keepHandbookDraft() {
-  const form = document.querySelector<HTMLDetailsElement>('#hbEditor');
-  if (!form) return;
-  A.hbOpen = form.open;
-  if (skipHbCapture) return;
-  const draft = readHandbookForm();
-  A.hb = JSON.stringify(draft) === JSON.stringify({ cards: CARDS, situations: SITUATIONS }) ? null : draft;
-}
-// Vẽ lại trang quản trị sau khi thay đổi A.hb trực tiếp, không đọc lại DOM cũ.
-function redrawAfterHb() { skipHbCapture = true; drawAdmin(); skipHbCapture = false; }
-// Bảo đảm có bản nháp (sao chép từ nội dung đang dùng), giữ phần đang gõ trước khi thêm/xóa.
-function ensureHb() {
-  keepHandbookDraft();
-  if (!A.hb) A.hb = { cards: CARDS.map(c => ({ ...c })), situations: SITUATIONS.map(s => ({ ...s })) };
-  return A.hb;
-}
-
-async function saveHandbook() {
-  const hb = readHandbookForm();
-  if (!hb.cards.length || !hb.situations.length) { toast('Cần ít nhất một thẻ kiến thức và một tình huống.'); return; }
-  const emptyCard = hb.cards.findIndex(c => !c.title || !c.body || !c.callout);
-  if (emptyCard >= 0) { toast(`Thẻ ${emptyCard + 1} còn thiếu nội dung.`); return; }
-  const emptySit = hb.situations.findIndex(s => !s.title || !s.reaction || !s.solution);
-  if (emptySit >= 0) { toast(`Tình huống ${emptySit + 1} còn thiếu nội dung.`); return; }
-  if (JSON.stringify(hb) === JSON.stringify({ cards: CARDS, situations: SITUATIONS })) { toast('Chưa có thay đổi nào.'); return; }
-  if (!confirm('Lưu Cẩm Nang mới? Học sinh sẽ thấy ngay từ lần mở app tiếp theo.')) return;
-  try { await adminSaveHandbook(hb.cards, hb.situations); } catch (e) { failed(e, 'Không lưu được Cẩm Nang.'); return; }
-  setHandbook(hb.cards, hb.situations);
-  A.hb = null;
-  toast('Đã lưu Cẩm Nang.');
-  $('#module-8').innerHTML = '';
-  renderAdmin();
 }
 
 function codesCard() {
@@ -503,12 +367,6 @@ registerActions({
   adminDemote: ({ arg }) => setRole(arg, 'student'),
   adminAddClass: ({ el, arg }) => addClass(el, arg),
   adminRemoveClass: ({ el, arg }) => removeClass(arg, el.dataset.cls ?? ''),
-  adminSaveQuiz: () => saveQuiz(),
-  adminSaveHandbook: () => saveHandbook(),
-  hbAddCard: () => { const hb = ensureHb(); hb.cards.push({ title: '', body: '', callout: '' }); A.hbOpen = true; redrawAfterHb(); },
-  hbDelCard: ({ arg }) => { const hb = ensureHb(); hb.cards.splice(+arg, 1); A.hbOpen = true; redrawAfterHb(); },
-  hbAddSit: () => { const hb = ensureHb(); hb.situations.push({ title: '', reaction: '', solution: '' }); A.hbOpen = true; redrawAfterHb(); },
-  hbDelSit: ({ arg }) => { const hb = ensureHb(); hb.situations.splice(+arg, 1); A.hbOpen = true; redrawAfterHb(); },
   adminRotateTeacherCode: () => rotate('teacher'),
   adminRotateAdminCode: () => rotate('admin'),
   adminExportCsv: () => exportCsv(),
