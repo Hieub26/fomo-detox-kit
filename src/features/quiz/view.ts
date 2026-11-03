@@ -70,9 +70,8 @@ export function calculateScore() {
   if (post) { post.postId = a.id; post.status = 'done'; postFor = null; }
   save();
   retake = false;
-  const box = $('#resultBox');
-  showResult(box, a);
-  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  render2(); // thay biểu mẫu bằng trang kết quả: không chọn lại đáp án hay nộp trùng được nữa
+  $('#resultBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 export function showResult(box: HTMLElement, a: Assessment) {
   const li = levelIdx(a.score), L = LEVELS[li], C = COLOR[L.color];
