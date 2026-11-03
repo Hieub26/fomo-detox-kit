@@ -12,7 +12,7 @@ export const SOUNDS: Record<string, { name: string; desc: string; icon: string }
   lofi: { name: 'Giai Điệu Thiền Nhẹ Nhàng', desc: 'Nhịp điệu chậm rãi, nhẹ nhàng', icon: 'fa-music' }
 };
 
-export const AU = { ctx: null as AudioContext | null, master: null as GainNode | null, nodes: [] as AudioScheduledSourceNode[], key: null as string | null, playing: false, vol: 0.5, timerMin: 0, timer: undefined as number | undefined, endAt: 0, startedAt: 0 };
+export const AU = { ctx: null as AudioContext | null, master: null as GainNode | null, nodes: [] as AudioScheduledSourceNode[], key: null as string | null, playing: false, vol: 0.5, timerMin: 0, timer: undefined as number | undefined, endAt: 0, startedAt: 0, audioEl: null as HTMLAudioElement | null };
 export function noiseBuffer(ctx: AudioContext, kind: string) {
   const n = ctx.sampleRate * 3, buf = ctx.createBuffer(1, n, ctx.sampleRate), o = buf.getChannelData(0);
   if (kind === 'white') { for (let i = 0; i < n; i++) o[i] = Math.random() * 2 - 1; }
@@ -40,10 +40,12 @@ export function buildSound(ctx: AudioContext, out: AudioNode, key: string) {
   else if (key === 'theta') { osc('sine', 120, out, -1); osc('sine', 126, out, 1); }
   else if (key === 'delta') { osc('sine', 150, out, -1); osc('sine', 153, out, 1); }
   else if (key === 'rain') {
-    // Pink noise cắt bớt âm cao để không chói; vẫn giữ dải 200–2200 Hz nên nghe khác tiếng sóng biển trầm hơn.
-    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 200;
-    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
-    hp.connect(lp); lp.connect(out); noise('pink', hp);
+    const audio = new Audio('/rain.mp3');
+    audio.loop = true;
+    const src = ctx.createMediaElementSource(audio);
+    src.connect(out);
+    audio.play();
+    AU.audioEl = audio;
   } else if (key === 'white') {
     // White noise nguyên bản rất to và chói, nên hạ xuống ngang các âm nền khác.
     const soft = ctx.createGain(); soft.gain.value = .2; soft.connect(out); noise('white', soft);
@@ -82,13 +84,14 @@ export function stopSound(silent?: boolean) {
   const ctx = AU.ctx!, nodes = AU.nodes, m = AU.master!;
   try { m.gain.cancelScheduledValues(ctx.currentTime); m.gain.setValueAtTime(m.gain.value, ctx.currentTime); m.gain.linearRampToValueAtTime(0, ctx.currentTime + .4); } catch (e) { /* bỏ qua */ }
   setTimeout(() => { nodes.forEach(n => { try { n.stop(); } catch (e) { /* bỏ qua */ } }); try { m.disconnect(); } catch (e) { /* bỏ qua */ } }, 500);
+  if (AU.audioEl) { AU.audioEl.pause(); AU.audioEl.src = ''; AU.audioEl = null; }
   clearTimeout(AU.timer);
-  Object.assign(AU, { nodes: [], key: null, playing: false, master: null, endAt: 0 });
+  Object.assign(AU, { nodes: [], key: null, playing: false, master: null, endAt: 0, audioEl: null });
   if (!silent) renderPlayer();
 }
 export function toggleAudioPlay() {
   if (!AU.key) { selectSound('alpha'); return; }
-  if (AU.playing) { AU.ctx!.suspend(); AU.playing = false; } else { AU.ctx!.resume(); AU.playing = true; }
+  if (AU.playing) { AU.ctx!.suspend(); if (AU.audioEl) AU.audioEl.pause(); AU.playing = false; } else { AU.ctx!.resume(); if (AU.audioEl) AU.audioEl.play(); AU.playing = true; }
   renderPlayer();
 }
 export function changeVolume(v: string) {
