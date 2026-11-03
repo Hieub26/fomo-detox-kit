@@ -1,9 +1,9 @@
-import type { Assessment } from '../../types';
+import type { Assessment, SurveyInfo } from '../../types';
 import { compareHtml } from '../progress/charts';
 import { QUIZ } from './config';
-import { COLOR, LEVELS, MAXSCORE, SCALE_LABEL, SUPPORT } from './content';
+import { COLOR, INFO_Q, LEVELS, MAXSCORE, NOTE_LABEL, NOTE_MAX, PART1, PART3, SCALE_LABEL, SUPPORT } from './content';
 import { quizEditor } from './editor';
-import { assessById, isHigh, lastAssess, levelIdx, scoreOf } from './scoring';
+import { assessById, fmtScore, isHigh, lastAssess, levelIdx, scoreOf } from './scoring';
 import { switchTab } from '../shell/navigation';
 import { $, card, esc, fmtDate, toast, uid } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
@@ -44,30 +44,65 @@ export function render2() {
     <div class="text-center mb-8">
       <span class="bg-teal-100 text-teal-800 text-xs font-semibold px-3 py-1 rounded-full">${SCALE_LABEL}</span>
       <h2 class="text-2xl font-bold text-slate-800 mt-2">Đánh Giá Mức Độ FOMO &amp; Giấc Ngủ Của Bạn</h2>
-      <p class="text-slate-500 text-sm mt-1">Trả lời trung thực 10 câu hỏi ngắn dưới đây để hệ thống tính điểm và gợi ý lộ trình phù hợp.</p>
+      <p class="text-slate-500 text-sm mt-1">Trả lời trung thực các câu hỏi dưới đây. Điểm được tính từ ${QUIZ.length} câu ở Phần II để gợi ý lộ trình phù hợp.</p>
       ${post ? `<p class="mt-3 text-sm bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-xl px-3 py-2"><i class="fa-solid fa-flag-checkered mr-1"></i> Đây là bài khảo sát <b>sau</b> Lộ trình ${post.days} ngày. Kết quả sẽ được so sánh với bài trước đó.</p>` : ''}
     </div>
     <form id="fomoForm" class="space-y-6" data-submit="noop">
+      <h3 class="font-bold text-lg text-slate-800">Phần I. Thông tin chung</h3>
+      ${PART1.map(infoBlock).join('')}
+      <h3 class="font-bold text-lg text-slate-800 pt-2">Phần II. Biểu hiện tâm lý FOMO</h3>
       ${QUIZ.map((q, i) => `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
         <p class="font-semibold text-slate-800 text-sm mb-3">${i + 1}. ${esc(q.question)}</p>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">${q.labels.map((o, k) => `
           <label class="flex items-center gap-2 p-2 bg-white rounded border border-slate-200 cursor-pointer hover:bg-teal-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50">
             <input type="radio" name="q_${i}" value="${k + 1}" class="accent-teal-600"> ${esc(o)}</label>`).join('')}</div></div>`).join('')}
+      <h3 class="font-bold text-lg text-slate-800 pt-2">Phần III. Nhu cầu hỗ trợ</h3>
+      ${PART3.map(infoBlock).join('')}
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80"><label class="block font-semibold text-slate-800 text-sm mb-2" for="info_note">${esc(NOTE_LABEL)} <span class="font-normal text-slate-400">(không bắt buộc)</span></label>
+        <textarea id="info_note" rows="3" maxlength="${NOTE_MAX}" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"></textarea></div>
       <div class="pt-4 text-center"><button type="button" data-click="calculateScore" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-teal-600 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:opacity-95 transition flex items-center justify-center gap-2 mx-auto"><i class="fa-solid fa-calculator"></i> Xem Kết Quả</button></div>
     </form>
     <div id="resultBox" class="hidden mt-8 p-6 rounded-2xl border"></div>
     <p class="text-xs text-slate-400 text-center mt-6">Công cụ sàng lọc để tự theo dõi, không phải chẩn đoán y khoa.</p>
   </div></div>`;
 }
+// Một câu ở Phần I/III: chọn một (radio) hoặc chọn nhiều (checkbox).
+function infoBlock(key: keyof typeof INFO_Q) {
+  const q = INFO_Q[key], multi = 'multi' in q && q.multi;
+  return `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+    <p class="font-semibold text-slate-800 text-sm mb-3">${esc(q.label)}</p>
+    <div class="flex flex-wrap gap-2 text-xs">${q.opts.map(o => `
+      <label class="flex items-center gap-2 p-2 bg-white rounded border border-slate-200 cursor-pointer hover:bg-teal-50 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50">
+        <input type="${multi ? 'checkbox' : 'radio'}" name="info_${key}" value="${esc(o)}" class="accent-teal-600"> ${esc(o)}</label>`).join('')}</div></div>`;
+}
+function readInfo(): SurveyInfo | string {
+  const one = (k: string) => document.querySelector<HTMLInputElement>(`input[name="info_${k}"]:checked`)?.value;
+  const many = (k: string) => [...document.querySelectorAll<HTMLInputElement>(`input[name="info_${k}"]:checked`)].map(el => el.value);
+  const info: SurveyInfo = {
+    gender: one('gender'), snsTime: one('snsTime'), snsWhen: many('snsWhen'),
+    wantReduce: one('wantReduce'), readyDetox: one('readyDetox'), support: many('support'),
+    note: (document.querySelector<HTMLTextAreaElement>('#info_note')?.value || '').trim().slice(0, NOTE_MAX) || undefined
+  };
+  for (const k of [...PART1, ...PART3]) {
+    const v = info[k];
+    if (!v || (Array.isArray(v) && !v.length)) return k;
+  }
+  return info;
+}
 export function calculateScore() {
+  const info = readInfo();
+  if (typeof info === 'string') {
+    toast('Vui lòng trả lời câu: ' + INFO_Q[info as keyof typeof INFO_Q].label);
+    document.querySelector(`input[name="info_${info}"]`)!.scrollIntoView({ block: 'center' }); return;
+  }
   const answers = [];
   for (let i = 0; i < QUIZ.length; i++) {
     const c = document.querySelector<HTMLInputElement>(`input[name="q_${i}"]:checked`);
-    if (!c) { toast('Vui lòng trả lời đủ 10 câu. Bạn chưa trả lời câu ' + (i + 1) + '.'); document.querySelector(`input[name="q_${i}"]`)!.scrollIntoView({ block: 'center' }); return; }
+    if (!c) { toast(`Vui lòng trả lời đủ ${QUIZ.length} câu ở Phần II. Bạn chưa trả lời câu ${i + 1}.`); document.querySelector(`input[name="q_${i}"]`)!.scrollIntoView({ block: 'center' }); return; }
     answers.push(+c.value);
   }
   const post = postFor && S.programs.find(p => p.id === postFor);
-  const a = { id: uid(), date: new Date().toISOString(), answers, score: scoreOf(answers), kind: post ? 'sau' : 'thường', programId: post ? post.id : null };
+  const a = { id: uid(), date: new Date().toISOString(), answers, score: scoreOf(answers), kind: post ? 'sau' : 'thường', programId: post ? post.id : null, info };
   S.assessments.push(a);
   if (post) { post.postId = a.id; post.status = 'done'; postFor = null; }
   save();
@@ -87,7 +122,7 @@ export function showResult(box: HTMLElement, a: Assessment) {
   box.innerHTML = `<div class="flex items-start gap-4">
     <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white shrink-0 shadow-md ${C.icon}"><i class="fa-solid ${L.icon}"></i></div>
     <div class="flex-grow">
-      <div class="flex items-center justify-between flex-wrap gap-2"><h3 class="text-xl font-bold ${C.title}">${L.title}</h3><span class="px-3 py-1 rounded-full text-xs font-bold text-white ${C.badge}">Điểm: ${a.score}/${MAXSCORE}</span></div>
+      <div class="flex items-center justify-between flex-wrap gap-2"><h3 class="text-xl font-bold ${C.title}">${L.title}</h3><span class="px-3 py-1 rounded-full text-xs font-bold text-white ${C.badge}">Điểm TB: ${fmtScore(a.score)}/${MAXSCORE}</span></div>
       <p class="text-sm mt-2 leading-relaxed text-slate-700">${L.desc}</p>
       ${isHigh(a.score) ? supportBox() : ''}
       ${pre ? `<div class="mt-4 p-3 bg-white/70 rounded-xl border border-slate-200"><h4 class="font-bold text-sm mb-1">So sánh với trước lộ trình</h4>${compareHtml(pre, a)}</div>` : ''}

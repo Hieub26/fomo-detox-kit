@@ -3,8 +3,8 @@ import { appReady, refresh, tab } from '../shell/navigation';
 import { $ } from '../../lib/dom';
 import { sb } from '../../lib/supabase';
 import { S, blank, setS } from '../../state/store';
-import type { AppState, Assessment, AudioSession, Post, Program, UserRole } from '../../types';
-import type { Database } from '../../types/database';
+import type { AppState, Assessment, AudioSession, Post, Program, SurveyInfo, UserRole } from '../../types';
+import type { Database, Json } from '../../types/database';
 
 export const cacheKey = (uid: string) => 'fomo_cache_' + uid;
 
@@ -27,8 +27,8 @@ export const items = <K extends GroupKey>(k: K): GroupItems[K][] => (S as Groups
 export const TABLES: { [K in GroupKey]: { table: string; toRow: (item: GroupItems[K]) => Omit<GroupRows[K], 'user_id'>; fromRow: (row: GroupRows[K]) => GroupItems[K] } } = {
   assessments: {
     table: 'assessments',
-    toRow: a => ({ id: a.id, taken_at: a.date, answers: a.answers, score: a.score, kind: a.kind, program_id: a.programId || null }),
-    fromRow: r => ({ id: r.id, date: new Date(r.taken_at).toISOString(), answers: r.answers, score: r.score, kind: r.kind, programId: r.program_id })
+    toRow: a => ({ id: a.id, taken_at: a.date, answers: a.answers, score: a.score, kind: a.kind, program_id: a.programId || null, info: (a.info ?? null) as Json }),
+    fromRow: r => ({ id: r.id, date: new Date(r.taken_at).toISOString(), answers: r.answers, score: Number(r.score), kind: r.kind, programId: r.program_id, info: (r.info ?? null) as SurveyInfo | null })
   },
   programs: {
     table: 'programs',

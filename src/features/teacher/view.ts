@@ -2,7 +2,7 @@ import type { Assessment, Program } from '../../types';
 import { pct, progressBar } from '../program/progress';
 import { compareHtml, lineChart } from '../progress/charts';
 import { LEVELS, MAXSCORE } from '../quiz/content';
-import { byDate, isHigh, levelIdx, lvBadge } from '../quiz/scoring';
+import { byDate, fmtScore, isHigh, levelIdx, lvBadge } from '../quiz/scoring';
 import { tab } from '../shell/navigation';
 import { Sync, TABLES, fetchAllRows } from '../sync/sync';
 import { $, bt, card, download, esc, fmtDate, inp, toCsv, toast } from '../../lib/dom';
@@ -39,7 +39,7 @@ export function studentSummary(s: Student) {
   const first = as[0], last = as[as.length - 1], p = ps[ps.length - 1];
   return {
     s, count: as.length, first, last,
-    change: as.length > 1 ? last.score - first.score : null,
+    change: as.length > 1 ? Math.round((last.score - first.score) * 100) / 100 : null,
     program: p || null, percent: p ? pct(p) : null
   };
 }
@@ -62,7 +62,7 @@ export function drawTeacher() {
   const done = rows.filter(r => r.count);
   const high = done.filter(r => isHigh(r.last.score)).length;
   const changed = rows.filter(r => r.change !== null);
-  const avg = changed.length ? (changed.reduce((a, r) => a + r.change!, 0) / changed.length).toFixed(1) : '–';
+  const avg = changed.length ? (changed.reduce((a, r) => a + r.change!, 0) / changed.length).toFixed(2).replace('.', ',') : '–';
   const tile = (label: string, value: string | number, note?: string) => `<div class="${card} !p-4"><div class="text-xs text-slate-500">${label}</div><div class="text-2xl font-black text-slate-800 mt-1">${value}</div>${note ? `<div class="text-[11px] text-slate-400 mt-0.5">${note}</div>` : ''}</div>`;
 
   $('#module-7').innerHTML = `
@@ -106,7 +106,7 @@ export function drawTeacher() {
         ${rows.map(r => `<tr class="border-t border-slate-100 ${T.selected === r.s.id ? 'bg-teal-50/60' : ''}">
           <td class="py-2 pr-3"><div class="font-semibold text-slate-800">${esc(r.s.full_name || r.s.username)}</div><div class="text-[11px] text-slate-400">${esc(r.s.username)}</div></td>
           <td class="pr-3">${esc(r.s.class_name || '')}</td><td class="pr-3">${r.count}</td>
-          <td class="pr-3">${r.first ? r.first.score : '–'}</td><td class="pr-3 font-semibold">${r.last ? r.last.score : '–'}</td>
+          <td class="pr-3">${r.first ? fmtScore(r.first.score) : '–'}</td><td class="pr-3 font-semibold">${r.last ? fmtScore(r.last.score) : '–'}</td>
           <td class="pr-3 font-semibold ${r.change !== null && r.change < 0 ? 'text-emerald-600' : r.change !== null && r.change > 0 ? 'text-rose-600' : ''}">${r.change === null ? '–' : r.change > 0 ? '+' + r.change : r.change}</td>
           <td class="pr-3">${r.last ? lvBadge(r.last.score) : '–'}</td>
           <td class="pr-3">${r.program ? `${r.program.days} ngày • ${r.percent}%` : '–'}</td>
@@ -138,7 +138,7 @@ export function studentDetail() {
     ${T.tempPass && T.tempPass.id === s.id ? `<div class="mt-3 text-sm rounded-xl px-3 py-2 bg-amber-50 text-amber-900 border border-amber-200">Mật khẩu mới: <code class="font-bold select-all">${esc(T.tempPass.value)}</code>. Hãy đưa riêng cho học sinh và nhắc đổi lại ở mục Hồ sơ. Mật khẩu chỉ hiện một lần.</div>` : ''}
     ${as.length ? `<div class="max-w-xl mt-3">${lineChart(as)}</div>
       <div class="overflow-x-auto mt-2"><table class="w-full text-sm text-left"><tr class="text-xs text-slate-500"><th class="py-1">Ngày</th><th>Loại</th><th>Điểm</th><th>Mức</th></tr>
-      ${as.slice().reverse().map(a => `<tr class="border-t border-slate-100"><td class="py-1.5">${fmtDate(a.date)}</td><td>${esc(a.kind)}</td><td class="font-semibold">${a.score}/${MAXSCORE}</td><td>${lvBadge(a.score)}</td></tr>`).join('')}</table></div>` : '<p class="text-sm text-slate-500 mt-2">Học sinh chưa làm trắc nghiệm.</p>'}
+      ${as.slice().reverse().map(a => `<tr class="border-t border-slate-100"><td class="py-1.5">${fmtDate(a.date)}</td><td>${esc(a.kind)}</td><td class="font-semibold">${fmtScore(a.score)}/${MAXSCORE}</td><td>${lvBadge(a.score)}</td></tr>`).join('')}</table></div>` : '<p class="text-sm text-slate-500 mt-2">Học sinh chưa làm trắc nghiệm.</p>'}
     ${progs}</div>`;
 }
 

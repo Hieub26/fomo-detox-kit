@@ -2,16 +2,20 @@ import { PLANS } from './content';
 import { activeProgram, checkedCount, currentDay, pct } from './progress';
 import { tickCountdown } from './reminder';
 import { LEVELS, MAXSCORE } from '../quiz/content';
-import { lastAssess, levelIdx, lvBadge } from '../quiz/scoring';
+import { fmtScore, lastAssess, levelIdx, lvBadge } from '../quiz/scoring';
 import { refresh, switchTab } from '../shell/navigation';
 import { $, card, esc, fmtDate, toast, today, uid } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
 import { S, save } from '../../state/store';
 
 export let planPick: number | null = null;
+const VERY_LIGHT_MSG = 'Bạn đang ở mức Rất thấp (không có biểu hiện FOMO), hãy tiếp tục duy trì thói quen hiện tại và không cần tham gia lộ trình detox.';
+// Kết quả gần nhất ở mức Rất thấp (điểm TB ≤ LEVELS[0].max) thì không cho bắt đầu lộ trình.
+function isVeryLight() { const last = lastAssess(); return !!last && levelIdx(last.score) === 0; }
 export function startPlan(days: number) {
   const cur = activeProgram();
   if (cur && cur.days === days) { planPick = days; switchTab(3); return; }
+  if (isVeryLight()) { toast(VERY_LIGHT_MSG); return; }
   if (cur && !confirm(`Bạn đang thực hiện lộ trình ${cur.days} ngày. Bắt đầu lộ trình ${days} ngày sẽ dừng lộ trình đó. Tiếp tục?`)) return;
   if (cur) cur.status = cur.days <= checkedCount(cur) ? 'done' : 'stopped';
   const last = lastAssess();
@@ -44,7 +48,8 @@ export function render3() {
       <input type="checkbox" ${on ? 'checked' : ''} ${lock ? 'disabled' : ''} data-change="toggleDay" data-arg="${day}" class="mt-1 h-4 w-4 accent-teal-600">
       <span class="text-sm text-slate-700 leading-snug"><b>Ngày ${day}${day === cur ? ' · hôm nay' : ''}:</b> ${esc(t)}</span></label>`;
   }).join('');
-  const startBox = mine ? '' : `<div class="mb-4 p-4 rounded-xl bg-indigo-50 border border-indigo-200 text-sm text-indigo-900 flex items-center justify-between flex-wrap gap-2">
+  const startBox = mine ? '' : isVeryLight() ? `<div class="mb-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-900">
+      <i class="fa-solid fa-shield-halved mr-1"></i> ${VERY_LIGHT_MSG}</div>` : `<div class="mb-4 p-4 rounded-xl bg-indigo-50 border border-indigo-200 text-sm text-indigo-900 flex items-center justify-between flex-wrap gap-2">
       <span>${act ? `Bạn đang ở lộ trình ${act.days} ngày.` : 'Đây là bản xem trước.'} Bắt đầu để lưu tiến độ từng ngày.</span>
       <button data-click="startPlan" data-arg="${sel}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg">Bắt đầu lộ trình ${sel} ngày</button></div>`;
   const post = unfinished ? `<div class="mb-4 p-4 rounded-xl bg-gradient-to-r from-teal-600 to-indigo-600 text-white flex items-center justify-between flex-wrap gap-2">
@@ -66,7 +71,7 @@ export function render3() {
         <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition ${d === sel ? 'border-teal-500 bg-teal-50/30' : 'border-slate-200'}">
           <input type="radio" name="detoxPlan" ${d === sel ? 'checked' : ''} data-click="pickPlan" data-arg="${d}" class="accent-teal-600">
           <div class="ml-3"><span class="font-semibold text-slate-800 text-sm block">Lộ trình ${d} Ngày (${PLANS[d].sub})${act && act.days === d ? ' • đang thực hiện' : ''}</span><span class="text-xs text-slate-500">${PLANS[d].who}</span></div></label>`).join('')}</div>
-        ${last ? `<p class="text-xs text-slate-500 mt-3">Điểm gần nhất ${last.score}/${MAXSCORE} ${lvBadge(last.score)}: ${LEVELS[levelIdx(last.score)].days ? `gợi ý ${LEVELS[levelIdx(last.score)].days} ngày` : 'không cần lộ trình'}.</p>` : `<p class="text-xs text-slate-500 mt-3">Chưa có điểm. <a href="#2" class="text-teal-600 font-semibold">Làm trắc nghiệm</a> để nhận gợi ý.</p>`}
+        ${last ? `<p class="text-xs text-slate-500 mt-3">Điểm TB gần nhất ${fmtScore(last.score)}/${MAXSCORE} ${lvBadge(last.score)}: ${LEVELS[levelIdx(last.score)].days ? `gợi ý ${LEVELS[levelIdx(last.score)].days} ngày` : 'không cần lộ trình'}.</p>` : `<p class="text-xs text-slate-500 mt-3">Chưa có điểm. <a href="#2" class="text-teal-600 font-semibold">Làm trắc nghiệm</a> để nhận gợi ý.</p>`}
       </div>
     </div>
     <div class="lg:col-span-2 ${card}">

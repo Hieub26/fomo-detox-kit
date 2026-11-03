@@ -3,7 +3,7 @@ import { sb } from '../../lib/supabase';
 
 const KEY = 'fomo_quiz';
 function cached(): QuizItem[] | null {
-  try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+  try { const raw = localStorage.getItem(KEY), q = raw ? JSON.parse(raw) : null; return Array.isArray(q) && q.length === DEFAULT_QUIZ.length ? q : null; /* bỏ bản cũ 10 câu */ } catch (e) { return null; }
 }
 
 // Bộ câu hỏi đang dùng. Lưu lại trong máy để làm trắc nghiệm được khi mất mạng;

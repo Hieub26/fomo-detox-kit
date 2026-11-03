@@ -1,7 +1,7 @@
 import { checkedCount, completed, pct, streak } from '../program/progress';
 import { compareHtml, lineChart } from '../progress/charts';
 import { MAXSCORE } from '../quiz/content';
-import { assessById, levelIdx, lvBadge, sortedAssess } from '../quiz/scoring';
+import { assessById, fmtScore, levelIdx, lvBadge, sortedAssess } from '../quiz/scoring';
 import { supportBox } from '../quiz/view';
 import '../chat/view'; // đăng ký hành động studentStartChat
 import { refresh } from '../shell/navigation';
@@ -62,7 +62,7 @@ let showSupport = false; // bài vừa gửi có dấu hiệu tự làm hại m�
 
 export function badges(): [string, string, string, boolean, string][] {
   const list = sortedAssess();
-  const control = S.programs.some(p => { const a = assessById(p.preId), b = p.postId && assessById(p.postId); return a && b && b.score <= a.score - 3; })
+  const control = S.programs.some(p => { const a = assessById(p.preId), b = p.postId && assessById(p.postId); return a && b && b.score <= a.score - 0.3; })
     || (list.length > 1 && levelIdx(list[list.length - 1].score) <= 1 && levelIdx(list[0].score) > 1);
   const admin = S.profile.role === 'admin'; // quản trị viên thấy mọi huy hiệu đã mở để xem trước giao diện
   const list4: [string, string, string, boolean, string][] = [
@@ -89,7 +89,7 @@ export function progressCard() {
       <p class="text-xs text-slate-500 mb-2">Hoàn thành ${checkedCount(p)}/${p.days} ngày (${pct(p)}%) • ${st}</p>
       ${pre && post ? compareHtml(pre, post) : `<p class="text-xs text-slate-500">${pre ? 'Chưa có khảo sát sau lộ trình.' : 'Không có điểm gốc trước lộ trình.'}</p>${pre && !post && (checkedCount(p) >= p.days || p.status !== 'active') ? `<button data-click="startPost" data-arg="${esc(p.id)}" class="mt-2 px-3 py-1.5 bg-teal-600 text-white text-xs font-semibold rounded-lg">Làm khảo sát sau</button>` : ''}`}</div>`;
   }).join('');
-  const rows = list.slice().reverse().map(a => `<tr class="border-t border-slate-100"><td class="py-1.5">${fmtDate(a.date)}</td><td>${a.kind}</td><td class="font-semibold">${a.score}/${MAXSCORE}</td><td>${lvBadge(a.score)}</td></tr>`).join('');
+  const rows = list.slice().reverse().map(a => `<tr class="border-t border-slate-100"><td class="py-1.5">${fmtDate(a.date)}</td><td>${a.kind}</td><td class="font-semibold">${fmtScore(a.score)}/${MAXSCORE}</td><td>${lvBadge(a.score)}</td></tr>`).join('');
   return `<div class="${card}"><h3 class="font-bold text-xl text-slate-800 mb-1">Tiến Trình &amp; Phân Tích</h3>
     <p class="text-xs text-slate-500 mb-3">Điểm càng thấp càng tốt. Vùng xanh đậm: rất nhẹ (≤14), xanh nhạt: nhẹ (15–18), vàng: vừa (19–28), đỏ: cao (≥29).</p>
     <div class="max-w-xl">${lineChart(list)}</div>${overall}${progs}

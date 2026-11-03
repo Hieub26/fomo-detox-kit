@@ -1,5 +1,5 @@
 import { LEVELS } from '../quiz/content';
-import { GROUPS } from '../quiz/content';
+import { DEFAULT_QUIZ, GROUPS } from '../quiz/content';
 import { registerActions } from '../../lib/actions';
 
 // Trang giới thiệu nghiên cứu cho người chưa đăng nhập. Chỉ mô tả những gì app thực sự làm;
@@ -16,8 +16,8 @@ const CONTEXT = [
 ];
 
 const STEPS = [
-  ['Khảo sát đầu vào', `Bảng hỏi 10 câu, thang 4 mức, tổng điểm 10–40, chia ${GROUPS.length} nhóm: ${GROUPS.map(g => g.name.toLowerCase()).join(', ')}.`],
-  ['Phân loại & gợi ý', `Mức Rất nhẹ (≤${LEVELS[0].max}), Nhẹ (${LEVELS[0].max + 1}–${LEVELS[1].max}), Vừa (${LEVELS[1].max + 1}–${LEVELS[2].max}), Cao (≥${LEVELS[2].max + 1}); mức Rất nhẹ không cần lộ trình, ba mức còn lại gợi ý ${LEVELS.slice(1).map(l => l.days).join(' / ')} ngày tương ứng.`],
+  ['Khảo sát đầu vào', `Phiếu khảo sát 3 phần: thông tin chung, ${DEFAULT_QUIZ.length} câu biểu hiện FOMO (thang 4 mức, tính điểm trung bình 1–4) và nhu cầu hỗ trợ. Các câu chia ${GROUPS.length} nhóm: ${GROUPS.map(g => g.name.toLowerCase()).join(', ')}.`],
+  ['Phân loại & gợi ý', `Theo điểm TB: Rất thấp (1,00–1,80), Thấp (1,81–2,60), Trung bình (2,61–3,40), Cao (từ 3,41); mức Rất thấp không cần lộ trình, ba mức còn lại gợi ý ${LEVELS.slice(1).map(l => l.days).join(' / ')} ngày tương ứng.`],
   ['Can thiệp', 'Học sinh thực hiện nhiệm vụ detox mỗi ngày, kết hợp cẩm nang kiến thức, nhắc giờ rời màn hình 21h30 và âm thanh thư giãn.'],
   ['Khảo sát sau & so sánh', 'Làm lại bảng hỏi khi kết thúc lộ trình; hệ thống so sánh điểm trước và sau theo từng nhóm câu hỏi và từng câu.']
 ];
