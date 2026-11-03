@@ -21,7 +21,7 @@ const ROLE_LABEL: Record<UserRole, string> = { student: 'Học sinh', teacher: '
 const A = {
   accounts: [] as Account[], classes: {} as Record<string, string[]>, // teacher_id -> lớp
   assess: {} as Record<string, Assessment[]>, programs: {} as Record<string, Program[]>,
-  q: '', cls: '', role: '' as UserRole | 'pending' | '', selected: null as string | null, page: 0,
+  q: '', cls: '', level: '', role: '' as UserRole | 'pending' | '', selected: null as string | null, page: 0,
   tempPass: null as { id: string; value: string } | null,
   codes: {} as { teacher?: string; admin?: string },
   error: ''
@@ -105,6 +105,8 @@ export function drawAdmin() {
             <option value="">Mọi vai trò</option>${(['student', 'teacher', 'admin'] as UserRole[]).map(r => `<option value="${r}" ${A.role === r ? 'selected' : ''}>${ROLE_LABEL[r]}</option>`).join('')}<option value="pending" ${A.role === 'pending' ? 'selected' : ''}>Chờ xác nhận lớp</option></select>
           <select data-change="adminFilterClass" aria-label="Lọc theo lớp" class="border border-slate-200 rounded-lg px-2 py-1.5 text-sm">
             <option value="">Tất cả lớp</option>${classNames().map(c => `<option value="${esc(c)}" ${A.cls === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+          <select data-change="adminFilterLevel" aria-label="Lọc theo mức độ FOMO gần nhất" class="border border-slate-200 rounded-lg px-2 py-1.5 text-sm">
+            <option value="">Mọi mức độ</option>${LEVELS.map((l, i) => `<option value="${i}" ${A.level === String(i) ? 'selected' : ''}>${esc(l.short)}</option>`).join('')}<option value="none" ${A.level === 'none' ? 'selected' : ''}>Chưa làm trắc nghiệm</option></select>
           <button data-click="adminExportCsv" class="${bt} bg-indigo-600 hover:bg-indigo-700 !py-1.5">Xuất CSV</button>
         </div>
       </div>
@@ -167,10 +169,17 @@ function teacherCard() {
   </div>`;
 }
 
+// Lọc theo mức độ của lần trắc nghiệm gần nhất; "none" = học sinh chưa làm lần nào.
+function levelMatch(a: Account) {
+  if (a.role !== 'student') return false;
+  const l = latest(A.assess[a.id] || []);
+  return A.level === 'none' ? !l : !!l && String(levelIdx(l.score)) === A.level;
+}
 function filteredAccounts() {
   const q = A.q.trim().toLowerCase();
   return A.accounts.filter(a => (!A.role || (A.role === 'pending' ? isPending(a) : a.role === A.role))
     && (!A.cls || (a.role === 'student' ? (a.class_name || NO_CLASS) === A.cls : (A.classes[a.id] || []).includes(A.cls)))
+    && (!A.level || levelMatch(a))
     && (!q || a.username.includes(q) || a.full_name.toLowerCase().includes(q)));
 }
 
@@ -182,7 +191,7 @@ function usersHtml() {
   if (A.page < 0) A.page = 0;
   const start = A.page * PAGE_SIZE, rows = all.slice(start, start + PAGE_SIZE);
   return `<div class="overflow-x-auto custom-scrollbar"><table class="w-full text-sm text-left whitespace-nowrap">
-    <tr class="text-xs text-slate-500"><th class="py-2 pr-3">Họ tên</th><th class="pr-3">Vai trò</th><th class="pr-3">Lớp</th><th class="pr-3">Số lần TN</th><th class="pr-3">Gần nhất</th><th class="pr-3">Lộ trình</th><th></th></tr>
+    <tr class="text-xs text-slate-500"><th class="py-2 pr-3">Họ tên</th><th class="pr-3">Vai trò</th><th class="pr-3">Lớp</th><th class="pr-3">Số lần TN</th><th class="pr-3">Mức độ FOMO gần nhất</th><th class="pr-3">Lộ trình</th><th></th></tr>
     ${rows.map(a => {
       const as = A.assess[a.id] || [], last = latest(as), p = latest(A.programs[a.id]);
       const cls = a.role === 'student' ? a.class_name || '' : (A.classes[a.id] || []).join(', ');
@@ -359,6 +368,7 @@ registerActions({
   adminFilterRole: ({ el }) => { A.role = el.value as typeof A.role; A.selected = null; A.page = 0; drawUsers(); },
   adminApprove: ({ arg }) => approve(arg),
   adminDelete: ({ arg }) => deleteAccount(arg),
+  adminFilterLevel: ({ el }) => { A.level = el.value; A.selected = null; A.page = 0; drawUsers(); },
   adminFilterClass: ({ el }) => { A.cls = el.value; A.selected = null; A.page = 0; drawUsers(); },
   adminPage: ({ arg }) => { A.page = +arg; A.selected = null; drawUsers(); },
   adminSelect: ({ arg }) => { A.selected = arg; drawUsers(); const d = studentDetail(); if (d) openModal(d); },
