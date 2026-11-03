@@ -102,12 +102,12 @@ export function drawTeacher() {
         </div>
       </div>
       ${rows.length ? `<div class="overflow-x-auto custom-scrollbar"><table class="w-full text-sm text-left whitespace-nowrap">
-        <tr class="text-xs text-slate-500"><th class="py-2 pr-3">Họ tên</th><th class="pr-3">Lớp</th><th class="pr-3">Số lần</th><th class="pr-3">Đầu</th><th class="pr-3">Gần nhất</th><th class="pr-3">Đổi</th><th class="pr-3">Mức</th><th class="pr-3">Lộ trình</th><th></th></tr>
+        <tr class="text-xs text-slate-500"><th class="py-2 pr-3">Họ tên</th><th class="pr-3">Lớp</th><th class="pr-3">Số lần</th><th class="pr-3">Đầu</th><th class="pr-3">Gần nhất</th><th class="pr-3" title="Điểm gần nhất trừ điểm lần đầu. Số âm là mức FOMO giảm, tốt hơn.">Thay đổi so với lần đầu</th><th class="pr-3">Mức</th><th class="pr-3">Lộ trình</th><th></th></tr>
         ${rows.map(r => `<tr class="border-t border-slate-100 ${T.selected === r.s.id ? 'bg-teal-50/60' : ''}">
           <td class="py-2 pr-3"><div class="font-semibold text-slate-800">${esc(r.s.full_name || r.s.username)}</div><div class="text-[11px] text-slate-400">${esc(r.s.username)}</div></td>
           <td class="pr-3">${esc(r.s.class_name || '')}</td><td class="pr-3">${r.count}</td>
           <td class="pr-3">${r.first ? fmtScore(r.first.score) : '–'}</td><td class="pr-3 font-semibold">${r.last ? fmtScore(r.last.score) : '–'}</td>
-          <td class="pr-3 font-semibold ${r.change !== null && r.change < 0 ? 'text-emerald-600' : r.change !== null && r.change > 0 ? 'text-rose-600' : ''}">${r.change === null ? '–' : r.change > 0 ? '+' + r.change : r.change}</td>
+          <td class="pr-3 font-semibold ${r.change !== null && r.change < 0 ? 'text-emerald-600' : r.change !== null && r.change > 0 ? 'text-rose-600' : ''}">${r.change === null ? '–' : (r.change > 0 ? '+' : '') + fmtScore(r.change)}</td>
           <td class="pr-3">${r.last ? lvBadge(r.last.score) : '–'}</td>
           <td class="pr-3">${r.program ? `${r.program.days} ngày • ${r.percent}%` : '–'}</td>
           <td class="text-right"><button data-click="selectStudent" data-arg="${esc(r.s.id)}" class="px-2.5 py-1 border border-slate-200 rounded-lg text-xs hover:bg-slate-50">Chi tiết</button></td></tr>`).join('')}
