@@ -4,8 +4,9 @@ import { S, save } from '../../state/store';
 
 export const SOUNDS: Record<string, { name: string; desc: string; icon: string }> = {
   alpha: { name: 'Sóng Alpha (10Hz)', desc: 'Nhịp phách 10Hz, có thể giúp thư giãn sau giờ học', icon: 'fa-brain' },
-  theta: { name: 'Sóng Theta (6Hz)', desc: 'Nhịp phách 6Hz, có thể giúp dễ chợp mắt hơn', icon: 'fa-bed' },
-  rain: { name: 'Tiếng Mưa Rơi (White Noise)', desc: 'Tạo môi trường âm thanh nền che lấp các tiếng ồn gây xao nhãng', icon: 'fa-cloud-showers-heavy' },
+  theta: { name: 'Sóng Theta (6Hz)', desc: 'Nhịp phách 6Hz, có thể giúp thư giãn trước khi ngủ', icon: 'fa-bed' },
+  delta: { name: 'Sóng Delta (3Hz)', desc: 'Nhịp phách 3Hz, có thể giúp dễ vào giấc hơn', icon: 'fa-moon' },
+  rain: { name: 'Tiếng Mưa Rơi (Tiếng Ồn Trắng Đã Lọc)', desc: 'Tạo môi trường âm thanh nền che lấp các tiếng ồn gây xao nhãng', icon: 'fa-cloud-showers-heavy' },
   ocean: { name: 'Sóng Biển Dịu Êm (Pink Noise)', desc: 'Tần số nhịp nhàng dịu êm, nhấp nhô như sóng vỗ', icon: 'fa-water' },
   lofi: { name: 'Giai Điệu Thiền Nhẹ Nhàng', desc: 'Nhịp điệu chậm rãi, nhẹ nhàng', icon: 'fa-music' }
 };
@@ -36,6 +37,7 @@ export function buildSound(ctx: AudioContext, out: AudioNode, key: string) {
   const noise = (kind: string, dest: AudioNode) => { const s = add(ctx.createBufferSource()); s.buffer = noiseBuffer(ctx, kind); s.loop = true; s.connect(dest); s.start(); return s; };
   if (key === 'alpha') { osc('sine', 200, out, -1); osc('sine', 210, out, 1); }
   else if (key === 'theta') { osc('sine', 120, out, -1); osc('sine', 126, out, 1); }
+  else if (key === 'delta') { osc('sine', 150, out, -1); osc('sine', 153, out, 1); }
   else if (key === 'rain') {
     const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 500;
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 6000;
@@ -108,9 +110,9 @@ export function renderPlayer() {
 }
 export function render4() {
   const total = Math.round(S.audio.reduce((a, b) => a + b.seconds, 0) / 60);
-  const lib: string[][] = [['alpha', 'teal', 'Thư giãn não bộ sau giờ học'], ['theta', 'indigo', 'Dẫn dắt vào giấc ngủ sâu'], ['rain', 'sky', 'Xoa dịu tiếng ồn xung quanh'], ['ocean', 'emerald', 'Tần số nhịp nhàng dịu êm'], ['lofi', 'amber', 'Giai điệu chậm dưới 60BPM']];
+  const lib: string[][] = [['alpha', 'teal', 'Thư giãn não bộ sau giờ học'], ['theta', 'indigo', 'Thư giãn trước khi ngủ'], ['delta', 'violet', 'Hỗ trợ dễ vào giấc'], ['rain', 'sky', 'Xoa dịu tiếng ồn xung quanh'], ['ocean', 'emerald', 'Tần số nhịp nhàng dịu êm'], ['lofi', 'amber', 'Giai điệu chậm dưới 60BPM']];
   const LC: Record<string, string> = {
-    teal: 'hover:border-teal-500 hover:bg-teal-50/50|bg-teal-100 text-teal-600', indigo: 'hover:border-indigo-500 hover:bg-indigo-50/50|bg-indigo-100 text-indigo-600',
+    teal: 'hover:border-teal-500 hover:bg-teal-50/50|bg-teal-100 text-teal-600', indigo: 'hover:border-indigo-500 hover:bg-indigo-50/50|bg-indigo-100 text-indigo-600', violet: 'hover:border-violet-500 hover:bg-violet-50/50|bg-violet-100 text-violet-600',
     sky: 'hover:border-sky-500 hover:bg-sky-50/50|bg-sky-100 text-sky-600', emerald: 'hover:border-emerald-500 hover:bg-emerald-50/50|bg-emerald-100 text-emerald-600',
     amber: 'hover:border-amber-500 hover:bg-amber-50/50|bg-amber-100 text-amber-600'
   };
@@ -118,7 +120,7 @@ export function render4() {
     <div class="max-w-3xl mx-auto text-center">
       <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-3 py-1 rounded-full uppercase">Âm Thanh Thư Giãn</span>
       <h2 class="text-2xl font-bold text-slate-800 mt-2">Trình Phát Âm Thanh Thư Giãn</h2>
-      <p class="text-slate-500 text-sm mt-1">Âm thanh nhịp phách (binaural beats) Alpha/Theta và tiếng ồn nền có thể giúp một số bạn thư giãn, dễ ngủ hơn. Bằng chứng khoa học về nhịp phách còn hạn chế và hiệu quả khác nhau ở mỗi người. Đeo tai nghe hai bên để nghe nhịp phách.</p>
+      <p class="text-slate-500 text-sm mt-1">Âm thanh nhịp phách (binaural beats) Alpha/Theta/Delta và tiếng ồn nền có thể giúp một số bạn thư giãn, dễ ngủ hơn. Bằng chứng khoa học về nhịp phách còn hạn chế và hiệu quả khác nhau ở mỗi người. Đeo tai nghe hai bên để nghe nhịp phách.</p>
     </div>
     <div id="playerWrap" class="max-w-2xl mx-auto mt-8 bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden"><div class="flex flex-col items-center text-center">
       <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-teal-500 to-indigo-500 flex items-center justify-center pulse-animation mb-4 shadow-lg shadow-teal-500/20"><i id="currentAudioIcon" class="fa-solid fa-water text-3xl text-white"></i></div>
