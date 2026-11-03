@@ -6,6 +6,7 @@ import { S } from '../../state/store';
 export const itemScore = (ans: number[], i: number) => QUIZ[i].points[ans[i] - 1];
 export const scoreOf = (ans: number[]) => ans.reduce((a, _, i) => a + itemScore(ans, i), 0);
 export const levelIdx = (score: number) => LEVELS.findIndex(l => score <= l.max);
+export const isHigh = (score: number) => levelIdx(score) === LEVELS.length - 1;
 export const groupScore = (ans: number[], g: { items: number[] }) => g.items.reduce((a, i) => a + itemScore(ans, i - 1), 0);
 export const byDate = (a: { date: string }, b: { date: string }) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
 export const sortedAssess = () => S.assessments.slice().sort(byDate);

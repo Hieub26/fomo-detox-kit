@@ -63,7 +63,7 @@ let showSupport = false; // bài vừa gửi có dấu hiệu tự làm hại m�
 export function badges(): [string, string, string, boolean, string][] {
   const list = sortedAssess();
   const control = S.programs.some(p => { const a = assessById(p.preId), b = p.postId && assessById(p.postId); return a && b && b.score <= a.score - 3; })
-    || (list.length > 1 && levelIdx(list[list.length - 1].score) === 0 && levelIdx(list[0].score) > 0);
+    || (list.length > 1 && levelIdx(list[list.length - 1].score) <= 1 && levelIdx(list[0].score) > 1);
   const admin = S.profile.role === 'admin'; // quản trị viên thấy mọi huy hiệu đã mở để xem trước giao diện
   const list4: [string, string, string, boolean, string][] = [
     ['Chiến Binh Giấc Ngủ', 'fa-award', 'teal', completed(7), 'Hoàn thành lộ trình 7 ngày'],
@@ -91,7 +91,7 @@ export function progressCard() {
   }).join('');
   const rows = list.slice().reverse().map(a => `<tr class="border-t border-slate-100"><td class="py-1.5">${fmtDate(a.date)}</td><td>${a.kind}</td><td class="font-semibold">${a.score}/${MAXSCORE}</td><td>${lvBadge(a.score)}</td></tr>`).join('');
   return `<div class="${card}"><h3 class="font-bold text-xl text-slate-800 mb-1">Tiến Trình &amp; Phân Tích</h3>
-    <p class="text-xs text-slate-500 mb-3">Điểm càng thấp càng tốt. Vùng xanh: nhẹ (≤18), vàng: trung bình (19–28), đỏ: cao (≥29).</p>
+    <p class="text-xs text-slate-500 mb-3">Điểm càng thấp càng tốt. Vùng xanh đậm: rất nhẹ (≤14), xanh nhạt: nhẹ (15–18), vàng: vừa (19–28), đỏ: cao (≥29).</p>
     <div class="max-w-xl">${lineChart(list)}</div>${overall}${progs}
     <h4 class="font-bold text-sm mt-5 mb-1">Lịch sử trắc nghiệm</h4>
     <div class="overflow-x-auto"><table class="w-full text-sm text-left"><tr class="text-xs text-slate-500"><th class="py-1">Ngày</th><th>Loại</th><th>Điểm</th><th>Mức</th></tr>${rows}</table></div></div>`;

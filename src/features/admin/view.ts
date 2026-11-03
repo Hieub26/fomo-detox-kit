@@ -6,7 +6,7 @@ import { pct, progressBar } from '../program/progress';
 import { compareHtml, lineChart } from '../progress/charts';
 import { QUIZ, setQuiz } from '../quiz/config';
 import { GROUPS, LEVELS, MAXSCORE, type QuizItem } from '../quiz/content';
-import { byDate, groupScore, levelIdx, lvBadge } from '../quiz/scoring';
+import { byDate, groupScore, isHigh, levelIdx, lvBadge } from '../quiz/scoring';
 import { tab } from '../shell/navigation';
 import { TABLES, fetchAllRows } from '../sync/sync';
 import { randomPassword } from '../teacher/view';
@@ -79,7 +79,7 @@ export function drawAdmin() {
   keepHandbookDraft();
   const students = enrolled(), teachers = byRole('teacher'), pending = A.accounts.filter(isPending).length;
   const done = students.filter(s => (A.assess[s.id] || []).length);
-  const high = done.filter(s => levelIdx(latest(A.assess[s.id])!.score) === 2).length;
+  const high = done.filter(s => isHigh(latest(A.assess[s.id])!.score)).length;
   const allPrograms = students.flatMap(s => A.programs[s.id] || []);
   const finished = allPrograms.filter(p => p.status === 'done').length;
   const latestPct = students.map(s => latest(A.programs[s.id])).filter((p): p is Program => !!p).map(pct);
@@ -137,7 +137,7 @@ function classTable() {
   const rows = classNames().map(c => {
     const all = byRole('student').filter(s => (s.class_name || NO_CLASS) === c), list = all.filter(s => s.approved);
     const done = list.filter(s => (A.assess[s.id] || []).length);
-    const high = done.filter(s => levelIdx(latest(A.assess[s.id])!.score) === 2).length;
+    const high = done.filter(s => isHigh(latest(A.assess[s.id])!.score)).length;
     const ps = list.map(s => latest(A.programs[s.id])).filter((p): p is Program => !!p).map(pct);
     return { c, n: list.length, wait: all.filter(isPending).length, done: done.length, high, avg: ps.length ? Math.round(ps.reduce((a, b) => a + b, 0) / ps.length) + '%' : '–', teachers: teacherOf[c] || [] };
   });
@@ -248,7 +248,7 @@ function quizCard() {
   const cls = 'border border-slate-200 rounded-lg px-2 py-1.5 text-sm';
   return `<div class="${card}"><details id="quizEditor" ${A.quizOpen ? 'open' : ''}>
     <summary class="font-bold text-lg text-slate-800 cursor-pointer"><i class="fa-solid fa-pen-to-square text-teal-600 mr-1"></i> Sửa Câu Hỏi Trắc Nghiệm</summary>
-    <p class="text-xs text-slate-500 mt-1 mb-4">Mỗi đáp án được 1–4 điểm, điểm càng cao nghĩa là nguy cơ càng cao. Tổng luôn trong 10–${MAXSCORE} nên các mức Nhẹ, Trung bình, Cao giữ nguyên ngưỡng.</p>
+    <p class="text-xs text-slate-500 mt-1 mb-4">Mỗi đáp án được 1–4 điểm, điểm càng cao nghĩa là nguy cơ càng cao. Tổng luôn trong 10–${MAXSCORE} nên các mức Rất nhẹ, Nhẹ, Vừa, Cao giữ nguyên ngưỡng.</p>
     <div class="space-y-4">${items.map((q, i) => `<div data-quiz-item class="p-4 bg-slate-50 rounded-xl border border-slate-200">
       <label class="block text-sm font-semibold text-slate-800 mb-2">Câu ${i + 1}
         <textarea data-q rows="3" maxlength="300" class="mt-1 w-full font-normal ${cls}">${esc(q.question)}</textarea></label>

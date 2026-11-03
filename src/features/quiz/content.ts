@@ -25,14 +25,18 @@ export const GROUPS = [
 ];
 export const COLOR: Record<string, Record<string, string>> = {
   emerald: { box: 'border-emerald-300 bg-emerald-50/50', icon: 'bg-emerald-500', title: 'text-emerald-900', badge: 'bg-emerald-600', btn: 'bg-emerald-600 hover:bg-emerald-700', soft: 'bg-emerald-100 text-emerald-800' },
+  lime: { box: 'border-lime-300 bg-lime-50/50', icon: 'bg-lime-600', title: 'text-lime-900', badge: 'bg-lime-700', btn: 'bg-lime-700 hover:bg-lime-800', soft: 'bg-lime-100 text-lime-800' },
   amber: { box: 'border-amber-300 bg-amber-50/50', icon: 'bg-amber-500', title: 'text-amber-900', badge: 'bg-amber-600', btn: 'bg-amber-600 hover:bg-amber-700', soft: 'bg-amber-100 text-amber-800' },
   rose: { box: 'border-rose-300 bg-rose-50/50', icon: 'bg-rose-500', title: 'text-rose-900', badge: 'bg-rose-600', btn: 'bg-rose-600 hover:bg-rose-700', soft: 'bg-rose-100 text-rose-800' }
 };
-// Ngưỡng ≤18 và ≤28 theo bản gốc. Gợi ý lộ trình: nhẹ 7 ngày, trung bình 14 ngày, cao 21 ngày.
+// Bốn mức, nguy cơ tăng dần. Ngưỡng ≤18 và ≤28 theo bản gốc, mức nhẹ cũ được tách thêm ở 14.
+// Gợi ý lộ trình: rất nhẹ và nhẹ 7 ngày, vừa 14 ngày, cao 21 ngày.
 export const LEVELS = [
-  { short: 'Nhẹ', max: 18, color: 'emerald', days: 7, icon: 'fa-shield-halved', title: 'Mức Độ Nhẹ: Kiểm Soát Tốt',
+  { short: 'Rất nhẹ', max: 14, color: 'emerald', days: 7, icon: 'fa-shield-halved', title: 'Mức Độ Rất Nhẹ: Kiểm Soát Rất Tốt',
     desc: 'Chúc mừng! Bạn duy trì thói quen công nghệ rất lành mạnh. Cảm giác FOMO thấp và chất lượng giấc ngủ được bảo vệ tốt.' },
-  { short: 'Trung bình', max: 28, color: 'amber', days: 14, icon: 'fa-triangle-exclamation', title: 'Mức Độ Trung Bình: Cần Điều Chỉnh',
+  { short: 'Nhẹ', max: 18, color: 'lime', days: 7, icon: 'fa-circle-check', title: 'Mức Độ Nhẹ: Kiểm Soát Tốt',
+    desc: 'Bạn đang kiểm soát khá tốt, dù đôi lúc vẫn có cảm giác sợ bỏ lỡ hoặc dùng điện thoại muộn. Giữ vài thói quen nhỏ trước giờ ngủ sẽ giúp bạn duy trì trạng thái này.' },
+  { short: 'Vừa', max: 28, color: 'amber', days: 14, icon: 'fa-triangle-exclamation', title: 'Mức Độ Vừa: Cần Điều Chỉnh',
     desc: 'Bạn đang có một số dấu hiệu bị ảnh hưởng bởi FOMO. Việc dùng điện thoại buổi tối có thể đang làm giảm chất lượng giấc ngủ và sự tập trung khi học. Điều chỉnh từ bây giờ sẽ giúp bạn khá lên nhanh.' },
   { short: 'Cao', max: 40, color: 'rose', days: 21, icon: 'fa-hand-holding-heart', title: 'Mức Độ Cao: Bạn Nên Được Hỗ Trợ',
     desc: 'Điện thoại và mạng xã hội đang ảnh hưởng nhiều đến giấc ngủ và việc học của bạn. Đây không phải là chẩn đoán bệnh, nhưng là dấu hiệu bạn không nên tự xoay xở một mình: hãy bắt đầu lộ trình và trò chuyện với người lớn bạn tin tưởng.' }

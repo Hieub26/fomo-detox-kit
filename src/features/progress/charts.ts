@@ -9,8 +9,8 @@ export function lineChart(list: { date: string; score: number }[]) {
   const x = (i: number) => list.length === 1 ? (L + W - R) / 2 : L + i * (W - L - R) / (list.length - 1);
   const y = (v: number) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
   const band = (a: number, b: number, c: string) => `<rect x="${L}" y="${y(b)}" width="${W - L - R}" height="${y(a) - y(b)}" fill="${c}" opacity=".12"/>`;
-  let g = band(lo, 18, '#10b981') + band(18, 28, '#f59e0b') + band(28, hi, '#f43f5e');
-  [10, 18, 28, 40].forEach(v => { g += `<text x="${L - 4}" y="${y(v) + 4}" font-size="10" text-anchor="end" fill="#64748b">${v}</text>`; });
+  let g = band(lo, 14, '#10b981') + band(14, 18, '#84cc16') + band(18, 28, '#f59e0b') + band(28, hi, '#f43f5e');
+  [10, 14, 18, 28, 40].forEach(v => { g += `<text x="${L - 4}" y="${y(v) + 4}" font-size="10" text-anchor="end" fill="#64748b">${v}</text>`; });
   const pts = list.map((a, i) => `${x(i)},${y(a.score)}`).join(' ');
   let dots = '';
   list.forEach((a, i) => {

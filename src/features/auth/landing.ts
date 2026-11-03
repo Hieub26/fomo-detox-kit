@@ -17,7 +17,7 @@ const CONTEXT = [
 
 const STEPS = [
   ['Khảo sát đầu vào', `Bảng hỏi 10 câu, thang 4 mức, tổng điểm 10–40, chia ${GROUPS.length} nhóm: ${GROUPS.map(g => g.name.toLowerCase()).join(', ')}.`],
-  ['Phân loại & gợi ý', `Mức Nhẹ (≤${LEVELS[0].max}), Trung bình (${LEVELS[0].max + 1}–${LEVELS[1].max}), Cao (≥${LEVELS[1].max + 1}); gợi ý lộ trình ${LEVELS.map(l => l.days).join(' / ')} ngày tương ứng.`],
+  ['Phân loại & gợi ý', `Mức Rất nhẹ (≤${LEVELS[0].max}), Nhẹ (${LEVELS[0].max + 1}–${LEVELS[1].max}), Vừa (${LEVELS[1].max + 1}–${LEVELS[2].max}), Cao (≥${LEVELS[2].max + 1}); gợi ý lộ trình ${LEVELS.map(l => l.days).join(' / ')} ngày tương ứng.`],
   ['Can thiệp', 'Học sinh thực hiện nhiệm vụ detox mỗi ngày, kết hợp cẩm nang kiến thức, nhắc giờ rời màn hình 21h30 và âm thanh thư giãn.'],
   ['Khảo sát sau & so sánh', 'Làm lại bảng hỏi khi kết thúc lộ trình; hệ thống so sánh điểm trước và sau theo từng nhóm câu hỏi và từng câu.']
 ];

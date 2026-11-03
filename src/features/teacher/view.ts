@@ -2,7 +2,7 @@ import type { Assessment, Program } from '../../types';
 import { pct, progressBar } from '../program/progress';
 import { compareHtml, lineChart } from '../progress/charts';
 import { LEVELS, MAXSCORE } from '../quiz/content';
-import { byDate, levelIdx, lvBadge } from '../quiz/scoring';
+import { byDate, isHigh, levelIdx, lvBadge } from '../quiz/scoring';
 import { tab } from '../shell/navigation';
 import { Sync, TABLES, fetchAllRows } from '../sync/sync';
 import { $, bt, card, download, esc, fmtDate, inp, toCsv, toast } from '../../lib/dom';
@@ -60,7 +60,7 @@ export function drawTeacher() {
   const pending = T.students.filter(s => !s.approved && inFilter(s));
   const rows = T.students.filter(s => s.approved && inFilter(s)).map(studentSummary); // chỉ tính học sinh đã xác nhận
   const done = rows.filter(r => r.count);
-  const high = done.filter(r => levelIdx(r.last.score) === 2).length;
+  const high = done.filter(r => isHigh(r.last.score)).length;
   const changed = rows.filter(r => r.change !== null);
   const avg = changed.length ? (changed.reduce((a, r) => a + r.change!, 0) / changed.length).toFixed(1) : '–';
   const tile = (label: string, value: string | number, note?: string) => `<div class="${card} !p-4"><div class="text-xs text-slate-500">${label}</div><div class="text-2xl font-black text-slate-800 mt-1">${value}</div>${note ? `<div class="text-[11px] text-slate-400 mt-0.5">${note}</div>` : ''}</div>`;

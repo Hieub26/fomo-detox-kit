@@ -2,7 +2,7 @@ import type { Assessment } from '../../types';
 import { compareHtml } from '../progress/charts';
 import { QUIZ } from './config';
 import { COLOR, LEVELS, MAXSCORE, SCALE_LABEL, SUPPORT } from './content';
-import { assessById, lastAssess, levelIdx, scoreOf } from './scoring';
+import { assessById, isHigh, lastAssess, levelIdx, scoreOf } from './scoring';
 import { switchTab } from '../shell/navigation';
 import { $, card, esc, fmtDate, toast, uid } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
@@ -79,8 +79,8 @@ export function showResult(box: HTMLElement, a: Assessment) {
   const prog = a.programId && S.programs.find(p => p.id === a.programId);
   const pre = prog && assessById(prog.preId);
   let actions = '';
-  if (li === 2) actions = `<button data-click="startPlan" data-arg="21" class="px-4 py-2 ${C.btn} text-white text-xs font-semibold rounded-lg">Bắt Đầu Lộ Trình Detox 21 Ngày</button>`;
-  else actions = `<button data-click="startPlan" data-arg="${L.days}" class="px-4 py-2 ${C.btn} text-white text-xs font-semibold rounded-lg">${li === 0 ? 'Duy trì' : 'Kích Hoạt'} Lộ Trình Detox ${L.days} Ngày</button>`;
+  if (isHigh(a.score)) actions = `<button data-click="startPlan" data-arg="21" class="px-4 py-2 ${C.btn} text-white text-xs font-semibold rounded-lg">Bắt Đầu Lộ Trình Detox 21 Ngày</button>`;
+  else actions = `<button data-click="startPlan" data-arg="${L.days}" class="px-4 py-2 ${C.btn} text-white text-xs font-semibold rounded-lg">${li <= 1 ? 'Duy trì' : 'Kích Hoạt'} Lộ Trình Detox ${L.days} Ngày</button>`;
   actions += `<button data-click="switchTab" data-arg="5" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50">Xem tiến độ</button>`;
   box.className = `mt-8 p-6 rounded-2xl border ${C.box} animate-fade-in`;
   box.innerHTML = `<div class="flex items-start gap-4">
@@ -88,7 +88,7 @@ export function showResult(box: HTMLElement, a: Assessment) {
     <div class="flex-grow">
       <div class="flex items-center justify-between flex-wrap gap-2"><h3 class="text-xl font-bold ${C.title}">${L.title}</h3><span class="px-3 py-1 rounded-full text-xs font-bold text-white ${C.badge}">Điểm: ${a.score}/${MAXSCORE}</span></div>
       <p class="text-sm mt-2 leading-relaxed text-slate-700">${L.desc}</p>
-      ${li === 2 ? supportBox() : ''}
+      ${isHigh(a.score) ? supportBox() : ''}
       ${pre ? `<div class="mt-4 p-3 bg-white/70 rounded-xl border border-slate-200"><h4 class="font-bold text-sm mb-1">So sánh với trước lộ trình</h4>${compareHtml(pre, a)}</div>` : ''}
       <p class="text-xs text-slate-500 mt-3"><i class="fa-solid fa-floppy-disk mr-1"></i> Kết quả ngày ${fmtDate(a.date)} đã được lưu trong tài khoản của bạn.</p>
       <div class="mt-4 pt-4 border-t border-slate-200/60 flex flex-wrap gap-3">${actions}</div>
