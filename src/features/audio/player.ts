@@ -6,7 +6,7 @@ export const SOUNDS: Record<string, { name: string; desc: string; icon: string }
   alpha: { name: 'Sóng Alpha (10Hz)', desc: 'Nhịp phách 10Hz, có thể giúp thư giãn sau giờ học', icon: 'fa-brain' },
   theta: { name: 'Sóng Theta (6Hz)', desc: 'Nhịp phách 6Hz, có thể giúp thư giãn trước khi ngủ', icon: 'fa-bed' },
   delta: { name: 'Sóng Delta (3Hz)', desc: 'Nhịp phách 3Hz, có thể giúp dễ vào giấc hơn', icon: 'fa-moon' },
-  rain: { name: 'Tiếng Mưa Rơi (Tiếng Ồn Trắng Đã Lọc)', desc: 'Tạo môi trường âm thanh nền che lấp các tiếng ồn gây xao nhãng', icon: 'fa-cloud-showers-heavy' },
+  rain: { name: 'Mưa Nhẹ (Pink Noise)', desc: 'Tiếng mưa êm, che bớt các tiếng ồn gây xao nhãng', icon: 'fa-cloud-showers-heavy' },
   ocean: { name: 'Sóng Biển Dịu Êm (Pink Noise)', desc: 'Tần số nhịp nhàng dịu êm, nhấp nhô như sóng vỗ', icon: 'fa-water' },
   lofi: { name: 'Giai Điệu Thiền Nhẹ Nhàng', desc: 'Nhịp điệu chậm rãi, nhẹ nhàng', icon: 'fa-music' }
 };
@@ -39,9 +39,10 @@ export function buildSound(ctx: AudioContext, out: AudioNode, key: string) {
   else if (key === 'theta') { osc('sine', 120, out, -1); osc('sine', 126, out, 1); }
   else if (key === 'delta') { osc('sine', 150, out, -1); osc('sine', 153, out, 1); }
   else if (key === 'rain') {
-    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 500;
-    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 6000;
-    hp.connect(lp); lp.connect(out); noise('white', hp);
+    // Pink noise cắt bớt âm cao để không chói; vẫn giữ dải 200–2200 Hz nên nghe khác tiếng sóng biển trầm hơn.
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 200;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
+    hp.connect(lp); lp.connect(out); noise('pink', hp);
   } else if (key === 'ocean') {
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700;
     const swell = ctx.createGain(); swell.gain.value = .6;
