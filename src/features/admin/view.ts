@@ -3,8 +3,8 @@ import { adminDeleteUser, adminResetPassword, adminSetRole, rotateAdminCode, rot
 import { pct, progressBar } from '../program/progress';
 import { compareHtml, lineChart } from '../progress/charts';
 import { QUIZ } from '../quiz/config';
-import { GROUPS, LEVELS, MAXSCORE } from '../quiz/content';
-import { byDate, groupScore, isHigh, levelIdx, lvBadge } from '../quiz/scoring';
+import { GROUPS, INFO_Q, LEVELS, MAXSCORE, NOTE_LABEL } from '../quiz/content';
+import { byDate, fmtScore, groupScore, isHigh, levelIdx, lvBadge, sameQuiz } from '../quiz/scoring';
 import { tab } from '../shell/navigation';
 import { TABLES, fetchAllRows } from '../sync/sync';
 import { randomPassword } from '../teacher/view';
@@ -237,8 +237,24 @@ function studentDetail() {
     <h3 class="font-bold text-lg text-slate-800">${esc(name(s))} <span class="text-xs font-normal text-slate-500">(${esc(s.username)} • ${esc(s.class_name || NO_CLASS)})</span></h3>
     ${as.length ? `<div class="max-w-xl mt-3">${lineChart(as)}</div>
       <div class="overflow-x-auto mt-2"><table class="w-full text-sm text-left"><tr class="text-xs text-slate-500"><th class="py-1">Ngày</th><th>Loại</th><th>Điểm</th><th>Mức</th></tr>
-      ${as.slice().reverse().map(a => `<tr class="border-t border-slate-100"><td class="py-1.5">${fmtDate(a.date)}</td><td>${esc(a.kind)}</td><td class="font-semibold">${a.score}/${MAXSCORE}</td><td>${lvBadge(a.score)}</td></tr>`).join('')}</table></div>` : '<p class="text-sm text-slate-500 mt-2">Học sinh chưa làm trắc nghiệm.</p>'}
-    ${progs}</div>`;
+      ${as.slice().reverse().map(a => `<tr class="border-t border-slate-100"><td class="py-1.5">${fmtDate(a.date)}</td><td>${esc(a.kind)}</td><td class="font-semibold">${fmtScore(a.score)}/${MAXSCORE}</td><td>${lvBadge(a.score)}</td></tr>`).join('')}</table></div>` : '<p class="text-sm text-slate-500 mt-2">Học sinh chưa làm trắc nghiệm.</p>'}
+    ${infoHtml(latest(as))}${progs}</div>`;
+}
+
+// Phần I và III của phiếu khảo sát (bài làm gần nhất). Bài cũ trước phiếu mới không có phần này.
+type InfoKey = keyof NonNullable<Assessment['info']>;
+const INFO_COLS: [string, InfoKey][] = [['gioi_tinh', 'gender'], ['tg_mxh_moi_ngay', 'snsTime'], ['thoi_diem_dung_mxh', 'snsWhen'],
+  ['muon_giam_mxh', 'wantReduce'], ['san_sang_detox', 'readyDetox'], ['hinh_thuc_ho_tro', 'support'], ['chia_se_them', 'note']];
+function infoCell(a: Assessment, k: InfoKey) {
+  const v = a.info?.[k];
+  return Array.isArray(v) ? v.join('; ') : v || '';
+}
+function infoHtml(a: Assessment | undefined) {
+  if (!a?.info) return '';
+  const label = (k: InfoKey) => k === 'note' ? NOTE_LABEL : INFO_Q[k].label;
+  const rows = INFO_COLS.map(c => c[1]).filter(k => infoCell(a, k)).map(k => `<tr class="border-t border-slate-100 align-top"><td class="py-1.5 pr-3 text-slate-500">${esc(label(k))}</td><td>${esc(infoCell(a, k))}</td></tr>`).join('');
+  return `<h4 class="font-bold text-sm mt-4">Thông tin chung & nhu cầu hỗ trợ <span class="font-normal text-slate-500">(bài ngày ${fmtDate(a.date)})</span></h4>
+    <div class="overflow-x-auto"><table class="w-full text-sm text-left mt-1">${rows}</table></div>`;
 }
 
 function codesCard() {
@@ -332,7 +348,7 @@ export function exportResearch() {
   const classCodes = new Map<string, string>();
   students.forEach(s => { if (s.class_name && !classCodes.has(s.class_name)) classCodes.set(s.class_name, 'LOP' + String(classCodes.size + 1).padStart(2, '0')); });
   const head = ['ma_hs', 'ma_lop', 'da_xac_nhan_lop', 'lan_thu', 'so_ngay_tu_lan_dau', 'loai', 'lo_trinh_ngay', 'lo_trinh_trang_thai', 'lo_trinh_phan_tram',
-    'tong_diem_10_40', 'muc', ...GROUPS.map((_, i) => 'nhom_' + (i + 1)), ...Array.from({ length: 10 }, (_, i) => 'c' + (i + 1))];
+    'so_cau', 'diem_tb_1_4', 'muc', ...GROUPS.map((_, i) => 'nhom_' + (i + 1)), ...QUIZ.map((_, i) => 'c' + (i + 1)), ...INFO_COLS.map(c => c[0])];
   const rows: (string | number)[][] = [];
   students.forEach((s, n) => {
     const code = 'HS' + String(n + 1).padStart(3, '0'), ps = A.programs[s.id] || [];
@@ -342,12 +358,12 @@ export function exportResearch() {
       const pre = ps.find(p => p.preId === a.id), post = ps.find(p => p.postId === a.id) || (a.kind === 'sau' ? ps.find(p => p.id === a.programId) : undefined);
       const p = post || pre;
       rows.push([code, classCodes.get(s.class_name || '') || '', s.approved ? 1 : 0, k + 1, daysBetween(list[0].date.slice(0, 10), a.date.slice(0, 10)), post ? 'sau' : pre ? 'truoc' : 'thuong',
-        p ? p.days : '', p ? p.status : '', p ? pct(p) : '', a.score, LEVELS[levelIdx(a.score)].short,
-        ...GROUPS.map(g => groupScore(a.answers, g)), ...a.answers]);
+        p ? p.days : '', p ? p.status : '', p ? pct(p) : '', a.answers.length, a.score, LEVELS[levelIdx(a.score)].short,
+        ...GROUPS.map(g => groupScore(a.answers, g) ?? ''), ...QUIZ.map((_, i) => sameQuiz(a.answers) ? a.answers[i] : ''), ...INFO_COLS.map(c => infoCell(a, c[1]))]);
     });
   });
   if (!rows.length) { toast('Chưa có lần làm trắc nghiệm nào để xuất.'); return; }
-  const note = [['# Ghi chú: c1-c10 là thứ tự đáp án đã chọn (1-4). Điểm từng đáp án theo bảng hiện tại: ' + QUIZ.map((q, i) => `c${i + 1}=${q.points.join('/')}`).join(' ') + '. Nhóm: ' + GROUPS.map((g, i) => `nhom_${i + 1}=${g.name} (câu ${g.items.join(',')})`).join('; ')]];
+  const note = [['# Ghi chú: c1-c' + QUIZ.length + ' là thứ tự đáp án đã chọn (1-4); để trống với bài làm theo bộ 10 câu cũ (so_cau=10), điểm TB của bài cũ đã được quy đổi. Điểm từng đáp án theo bảng hiện tại: ' + QUIZ.map((q, i) => `c${i + 1}=${q.points.join('/')}`).join(' ') + '. Nhóm: ' + GROUPS.map((g, i) => `nhom_${i + 1}=${g.name} (câu ${g.items.join(',')})`).join('; ')]];
   download(`fomo-du-lieu-nghien-cuu-${new Date().toISOString().slice(0, 10)}.csv`, toCsv([head, ...rows, [], ...note]), 'text/csv');
   toast(`Đã xuất ${rows.length} lần làm trắc nghiệm của ${new Set(rows.map(r => r[0])).size} học sinh.`);
 }
@@ -356,7 +372,7 @@ export function exportCsv() {
   const rows = filteredAccounts().map(a => {
     const as = A.assess[a.id] || [], f = as[0], l = latest(as), p = latest(A.programs[a.id]);
     return [a.username, a.full_name, a.role, a.role === 'student' ? a.class_name : (A.classes[a.id] || []).join(' '), as.length,
-      f ? f.score : '', l ? l.score : '', as.length > 1 ? l!.score - f.score : '', l ? LEVELS[levelIdx(l.score)].short : '',
+      f ? f.score : '', l ? l.score : '', as.length > 1 ? Math.round((l!.score - f.score) * 100) / 100 : '', l ? LEVELS[levelIdx(l.score)].short : '',
       p ? p.days : '', p ? pct(p) : ''];
   });
   download(`fomo-toan-truong-${A.cls || 'tat-ca'}.csv`, toCsv([head, ...rows]), 'text/csv');

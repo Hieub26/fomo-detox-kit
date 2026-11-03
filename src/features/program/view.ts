@@ -2,15 +2,15 @@ import { PLANS } from './content';
 import { activeProgram, checkedCount, currentDay, pct } from './progress';
 import { tickCountdown } from './reminder';
 import { LEVELS, MAXSCORE } from '../quiz/content';
-import { lastAssess, levelIdx, lvBadge } from '../quiz/scoring';
+import { fmtScore, lastAssess, levelIdx, lvBadge } from '../quiz/scoring';
 import { refresh, switchTab } from '../shell/navigation';
 import { $, card, esc, fmtDate, toast, today, uid } from '../../lib/dom';
 import { registerActions } from '../../lib/actions';
 import { S, save } from '../../state/store';
 
 export let planPick: number | null = null;
-const VERY_LIGHT_MSG = 'Bạn đang ở mức Rất nhẹ (kiểm soát tốt), hãy tiếp tục duy trì thói quen hiện tại và không cần tham gia lộ trình detox.';
-// Kết quả gần nhất ở mức Rất nhẹ (≤ LEVELS[0].max điểm) thì không cho bắt đầu lộ trình.
+const VERY_LIGHT_MSG = 'Bạn đang ở mức Rất thấp (không có biểu hiện FOMO), hãy tiếp tục duy trì thói quen hiện tại và không cần tham gia lộ trình detox.';
+// Kết quả gần nhất ở mức Rất thấp (điểm TB ≤ LEVELS[0].max) thì không cho bắt đầu lộ trình.
 function isVeryLight() { const last = lastAssess(); return !!last && levelIdx(last.score) === 0; }
 export function startPlan(days: number) {
   const cur = activeProgram();
@@ -71,7 +71,7 @@ export function render3() {
         <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition ${d === sel ? 'border-teal-500 bg-teal-50/30' : 'border-slate-200'}">
           <input type="radio" name="detoxPlan" ${d === sel ? 'checked' : ''} data-click="pickPlan" data-arg="${d}" class="accent-teal-600">
           <div class="ml-3"><span class="font-semibold text-slate-800 text-sm block">Lộ trình ${d} Ngày (${PLANS[d].sub})${act && act.days === d ? ' • đang thực hiện' : ''}</span><span class="text-xs text-slate-500">${PLANS[d].who}</span></div></label>`).join('')}</div>
-        ${last ? `<p class="text-xs text-slate-500 mt-3">Điểm gần nhất ${last.score}/${MAXSCORE} ${lvBadge(last.score)}: ${LEVELS[levelIdx(last.score)].days ? `gợi ý ${LEVELS[levelIdx(last.score)].days} ngày` : 'không cần lộ trình'}.</p>` : `<p class="text-xs text-slate-500 mt-3">Chưa có điểm. <a href="#2" class="text-teal-600 font-semibold">Làm trắc nghiệm</a> để nhận gợi ý.</p>`}
+        ${last ? `<p class="text-xs text-slate-500 mt-3">Điểm TB gần nhất ${fmtScore(last.score)}/${MAXSCORE} ${lvBadge(last.score)}: ${LEVELS[levelIdx(last.score)].days ? `gợi ý ${LEVELS[levelIdx(last.score)].days} ngày` : 'không cần lộ trình'}.</p>` : `<p class="text-xs text-slate-500 mt-3">Chưa có điểm. <a href="#2" class="text-teal-600 font-semibold">Làm trắc nghiệm</a> để nhận gợi ý.</p>`}
       </div>
     </div>
     <div class="lg:col-span-2 ${card}">

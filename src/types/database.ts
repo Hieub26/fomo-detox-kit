@@ -25,14 +25,14 @@ export type Database = {
           Tables: {
             "assessments": {
                   Row: {
-                    "answers": (number)[],"id": string,"kind": string,"program_id": string | null,"score": number,"taken_at": string,"user_id": string
+                    "answers": (number)[],"id": string,"info": Json | null,"kind": string,"program_id": string | null,"score": number,"taken_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "answers": (number)[],"id": string,"kind": string,"program_id"?: string | null,"score": number,"taken_at": string,"user_id"?: string
+                    "answers": (number)[],"id": string,"info"?: Json | null,"kind": string,"program_id"?: string | null,"score": number,"taken_at": string,"user_id"?: string
                   }
                   Update: {
-                    "answers"?: (number)[],"id"?: string,"kind"?: string,"program_id"?: string | null,"score"?: number,"taken_at"?: string,"user_id"?: string
+                    "answers"?: (number)[],"id"?: string,"info"?: Json | null,"kind"?: string,"program_id"?: string | null,"score"?: number,"taken_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     

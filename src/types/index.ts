@@ -5,6 +5,11 @@ export interface Assessment {
   score: number;
   kind: string;
   programId: string | null;
+  info?: SurveyInfo | null; // Phần I và III của phiếu khảo sát; kết quả cũ không có
+}
+export interface SurveyInfo {
+  gender?: string; snsTime?: string; snsWhen?: string[];
+  wantReduce?: string; readyDetox?: string; support?: string[]; note?: string;
 }
 export interface Program {
   id: string;
